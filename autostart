@@ -1,0 +1,6 @@
+@lxpanel --profile LXDE-pi
+@pcmanfm --desktop --profile LXDE-pi
+@xscreensaver -no-splash
+@point-rpi
+@lxterminal -e /usr/bin/python3 /home/pi/Panel2Net/Panel2Net.py
+
