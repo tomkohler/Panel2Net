@@ -2,7 +2,7 @@
 # Reads serial data and pushes it via HTTP POST onto the net
 # runs on Raspberry Pi
 # Thomas Kohler (C) 2017/2018
-# Version 1.1 / 31-12-2017
+# Version 1.2 / 02-01-2018
 
 # imports
 import serial
@@ -16,15 +16,23 @@ import binascii
 import random
 
 # THIS IS THE UNIQUE DEVICENAME
-Device_ID = 'SB_ZURICH'
+Device_ID = ''
 
+# If unique device name not given, try first with processor serial, then with random number
 if Device_ID == '':
-    Device_ID = "SB_" + str(random.randint(1000,9999))
+    f = open('/proc/cpuinfo', 'r')
+    for line in f:
+        if line[0:6] == 'Serial':
+            Device_ID = line[20:26]
+    f.close()
+    # if no serial number could be picked up, then take a random number
+    if Device_ID == '':
+        Device_ID = "SB_" + str(random.randint(100000,999999))
 
 # Configuration Data (later to be put in Panel2Net.conf)
 # SerialPort: Name of RPi serial port receiving the panel data
 SerialPort = '/dev/ttyUSB0'
-# BaudRate: Serial port speed (Baud, Default)
+# BaudRate: Serial port speed (Baud, Default will be adjusted later)
 BaudRate = 9600
 # PackageByTime: Time Duration until a package is closed
 # and sent off (seconds)
@@ -46,7 +54,7 @@ RequestTimeOut = 10
 # Number of Retries before attempting to switch baudrate  
 ReadRetry = 3
 # MaxBuffer before flushing (in order to avoid buffer overflow)
-BufferMax = 1000
+BufferMax = 2000
 
 # LogFileName: Name of LogFile
 LogFileName = '/tmp/Panel2Net.log'
@@ -96,6 +104,8 @@ while True:
                 print ("\nPort Opening")
                 # Initialise RetryCounter
                 RetryCount = 0
+                # Initialise Variable to take remainder string
+                remainder_hex = b''
         
                 while True:
                     # If the BufferSize is larger than defined BufferMax then flush to avoid buffer overflow
@@ -104,6 +114,7 @@ while True:
                         print ("\n>>> Buffer limit exceeded. Flushing buffer")
                         ser.flushInput()
                         ser.flushOutput()
+                        remainder_hex = b''
 
                     # Read from Serial Interface
                     response = ser.read(PackageByLength)
@@ -115,6 +126,7 @@ while True:
                         # Calculate Request Start Time
                         StarterTime = time.time() * 1000
 
+                        # Kill the spaces between hex figures
                         response_hex = response.replace(b' ', b'')
                         # print("\nResponse_Hex: " + str(response_hex))
 
@@ -128,20 +140,44 @@ while True:
                             # print("\nResponse_Raw: " + str(response))    
                             # print("\nResponse_Hex: " + str(response_hex))
 
+                        # Add the remainder to the start of the sequence
+                        response_hex = remainder_hex + response_hex
+
                         # Evaluate if the received data matches the panel format or not
-                        if response_hex.find(b'017F0247') != -1:
+                        if ((response_hex.find(b'017F0247') != -1) and (response_hex.rfind(b'03') != -1)):
                             # found mobatime panel data
                             # print("Mobatime: " + str(response_hex) + " - " + str(response_hex.find(b'017F0247')))
+                            # Get First and Last Usable Sequence, extract Usable String and put rest in Remainder
+                            StartToken = response_hex.find(b'017F0247')
+                            EndToken = response_hex.rfind(b'03')
+                            # End Token + 4 because after the EndToken there is a checksum byte
+                            remainder_hex = response_hex[EndToken + 4:]
+                            response_hex = response_hex[StartToken:EndToken + 4] + b'017F0247'
+                            # print("Mobatime: ST:" + str(StartToken) + " - ET: " + str(EndToken) + "\n" + str(response_hex) + "\n" + str(remainder_hex))
                             RequestURL = '/abcd/mobatime.php'
                             RetryCount = 0
-                        elif (response_hex.find(b'F83320') != -1) or (response_hex.find(b'E8E8E4') != -1):
+                            
+                        elif (((response_hex.find(b'F83320') != -1) or (response_hex.find(b'E8E8E4') != -1)) and (response_hex.rfind(b'0D'))):
                             # found stramatel panel data
                             # print("Stramatel: " + str(response_hex) + " - " + str(response_hex.find(b'F83320')))
+                            StartToken = max(response_hex.find(b'F83320'), response_hex.find(b'E8E8E4'))
+                            EndToken = response_hex.rfind(b'0D')
+                            # End Token + 2 because after the EndToken there is no checksum byte
+                            remainder_hex = response_hex[EndToken + 2:]
+                            response_hex = response_hex[StartToken:EndToken + 2] + b'F83320'
+                            # print("Stramatel: ST:" + str(StartToken) + " - ET: " + str(EndToken) + "\n" + str(response_hex) + "\n" + str(remainder_hex))
                             RequestURL = '/abcd/stramatel.php'
                             RetryCount = 0
-                        elif (response_hex.find(b'0254') != -1) or (response_hex.find(b'0244') != -1):
+                                             
+                        elif (((response_hex.find(b'0254') != -1) or (response_hex.find(b'0244') != -1)) and (response_hex.rfind(b'03'))):
                             # found SwissTiming panel data
                             # print("SwissTiming: " + str(response_hex) + " - " + str(response_hex.find(b'0244')))
+                            StartToken = max(response_hex.find(b'0254'), response_hex.find(b'0244'))
+                            EndToken = response_hex.rfind(b'03')
+                            # End Token + 4 because after the EndToken there is a checksum byte
+                            remainder_hex = response_hex[EndToken + 4:]
+                            response_hex = response_hex[StartToken:EndToken + 4] + b'0254'
+                            # print("SwissTiming: ST:" + str(StartToken) + " - ET: " + str(EndToken) + "\n" + str(response_hex) + "\n" + str(remainder_hex))
                             RequestURL = '/abcd/swisstiming.php'
                             RetryCount = 0
                         else:
@@ -181,8 +217,8 @@ while True:
                             ser.flushInput()
                             ser.flushOutput()
                             response = ser.read(PackageByLength)
-                            response = ser.read(PackageByLength)
-                            response = b''        
+                            response = b''
+                            remainder_hex = b''
 
                         # End Evaluation Block
 
@@ -212,22 +248,22 @@ while True:
                             ElapserTime = int(EnderTime - StarterTime)
                             print("\r#: " + str(RequestCount) + ", Bd: " + str(BaudRate) + ", Panel: " + str(RequestURL[6:-4]) + ", Len#: "
                              + str (PackageByLength) + ", HT: " + str(ElapserTime)
-                             + " ms: " + str(httpreply.status) + ", Buf: " + str(ser.inWaiting()), end='       ', flush=True)
+                             + " ms: " + str(httpreply.status) + ", Buf: " + str(ser.inWaiting()), end='          ', flush=True)
                             logging.debug("\rRequestCount: " + str(RequestCount) + ", Package Length: "
                              + str (PackageByLength) + ", Handling Time: " + str(ElapserTime)
                              + " ms -> " + str(httpreply.status) + ", BufferSize: " + str(ser.inWaiting()))        
                             
                             # Adjust PackageByLength based on Handling Time
                             if ElapserTime > 2000:
-                                PackageByLength = 4096
-                            elif ElapserTime > 1000:
                                 PackageByLength = 2048
+                            elif ElapserTime > 1000:
+                                PackageByLength = 1024
                             elif ElapserTime > 500:
-                                PackageByLength = 1048
-                            elif ElapserTime > 250:
                                 PackageByLength = 512
-                            elif ElapserTime > 125:
+                            elif ElapserTime > 250:
                                 PackageByLength = 256
+                            elif ElapserTime > 125:
+                                PackageByLength = 128
                             elif ElapserTime > 60:
                                 PackageByLength = 128
                             else:
@@ -236,7 +272,7 @@ while True:
                     
                     else:
                         # In case nothing is coming down the serial interface
-                        print ("\rWaiting for serial input...", end='', flush=True)
+                        print ("\rWaiting for serial input...", end='          ', flush=True)
   
             # in case that the Serial Read or HTTP request fails        
             except Exception as e1:
