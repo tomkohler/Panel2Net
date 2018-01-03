@@ -38,3 +38,12 @@ SB_Scorebug Support Document - Documentation for System Administrators
 SBL_Scoreboard 2017_Autoscore5.BPres - XSplit Broadcaster Presentation configuration allowing XSplit to
 take the results and put it into lower thirds automatically
 
+Further elements
+
+Pre-Configure Wifi (without connection to Access Point):
+https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md
+
+To Do
+
+Still searching for a simple upgrade solution, so that when a new release of Panel2Net.py is available, it is
+automatically copied and installed on all connected devices.
