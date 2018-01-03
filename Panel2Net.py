@@ -2,7 +2,7 @@
 # Reads serial data and pushes it via HTTP POST onto the net
 # runs on Raspberry Pi
 # Thomas Kohler (C) 2017/2018
-# Version 1.2 / 02-01-2018
+# Version 1.3 / 03-01-2018
 
 # imports
 import serial
@@ -15,20 +15,27 @@ import time
 import binascii
 import random
 
-# THIS IS THE UNIQUE DEVICENAME
+# THIS RETRIEVES THE UNIQUE DEVICENAME IN PANEL2NET.ID
 Device_ID = ''
-
-# If unique device name not given, try first with processor serial, then with random number
-if Device_ID == '':
-    f = open('/proc/cpuinfo', 'r')
+try:
+    f = open('/home/pi/Panel2Net/Panel2Net.id', 'r')
     for line in f:
-        if line[0:6] == 'Serial':
-            Device_ID = line[20:26]
+        if line[0:9] == 'Device_ID':
+            Device_ID = line[10:]
     f.close()
-    # if no serial number could be picked up, then take a random number
-    if Device_ID == '':
+except:
+    # If unique device name not given, try first with processor serial, then with random number
+    try:
+        f = open('/proc/cpuinfo', 'r')
+        for line in f:
+            if line[0:6] == 'Serial':
+                Device_ID = line[20:26]
+        f.close()
+    except:
+        # if no serial number could be picked up, then take a random number
         Device_ID = "SB_" + str(random.randint(100000,999999))
 
+print("Hello. I'm Scorebug: " + Device_ID)
 # Configuration Data (later to be put in Panel2Net.conf)
 # SerialPort: Name of RPi serial port receiving the panel data
 SerialPort = '/dev/ttyUSB0'
@@ -90,7 +97,7 @@ ser.writeTimeout = 2
 
 while True:
     try:
-        print ("\nInitializing")
+        print ("Initializing")
         ser.close()
         ser.open()
         if ser.isOpen():
@@ -101,7 +108,7 @@ while True:
                 # flush output buffer, aborting current output
                 # and discard all that is in buffer
                 RequestCount = 0
-                print ("\nPort Opening")
+                print ("Port Opening")
                 # Initialise RetryCounter
                 RetryCount = 0
                 # Initialise Variable to take remainder string
