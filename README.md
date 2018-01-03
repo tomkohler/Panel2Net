@@ -27,7 +27,13 @@ Mobatime.php - PHP script to decode Mobatime serial info and compile an XML hist
 Stramatel.php - PHP script to decode Mobatime serial info and compile an XML history and last action
 SwissTiming.php - PHP script to decode Mobatime serial info and compile an XML history and last action
 
+mobatime_lausanne_massagno.txt - Mobatime test data
+SwissTiming_NEU_PUL_20171125 (1).txt - SwissTiming test data
+Stramatel_GEN_HEL_20171125.txt - Stramatel test data
+
 Spec Basketball Panel Data Handling - Specification of Interfaces
 Scorebug Installation and Usage Manual - Manual for Installationa and Usage (to be handed to the clubs)
+SB_Scorebug Support Document - Documentation for System Administrators
 
-
+SBL_Scoreboard 2017_Autoscore5.BPres - XSplit Broadcaster Presentation configuration allowing XSplit to
+take the results and put it into lower thirds automatically
