@@ -28,10 +28,10 @@ function attributeSB($teamName) {
 	return($sbname);
 }
 
-function todaysmatches() {
+function thisweeksmatches() {
 	// Initialisation
 	date_default_timezone_set('Europe/Zurich');
-	$matchfilename = '/var/www/html/abcd/matches2day.xml';
+	$matchfilename = '/var/www/html/abcd/matches1week.xml';
 	$todaydate = date('d.m.y');
 	$modifdate = date('d.m.y', filemtime($matchfilename));
 	$todaytime = date('H:i');
@@ -59,57 +59,66 @@ function todaysmatches() {
 			// concatenate matches from each of these leagues
 			$list = '';
 			$xml = '<?xml version="1.0"?><?xml-stylesheet type="text/xsl" href="table.xsl"?><document>';
-
 			foreach($matches['0'] as $result) {
 				// echo "Link: http://www.basketplan.ch/".$result['0']."<br>";
 				$list2 = file_get_contents('http://www.basketplan.ch/'.$result['0']);
 				$list .= $list2;
 			}
 			
-			// now analyse with regex all the occurences for the date
-			$number2 = preg_match_all ('/('.$todaydate.')/', $list, $matches2, PREG_OFFSET_CAPTURE);
+			// now analyse with regex all the occurences for any date
+			$number2 = preg_match_all ('/\s(\d\d\.\d\d\.\d\d)\s/', $list, $matches2, PREG_OFFSET_CAPTURE);
 			// echo "Matches with today's date found: ".$number2."<br>";
 			foreach($matches2['0'] as $result) {
 				// get date and time
 				// echo "Result: ".$result['0']." - ".$result['1']."<br>";
 
-				$matchdate = substr($list, $result['1'], 8);
-				$matchtime = substr($list, $result['1'] + 9, 5);
+				$matchday = substr($list, $result['1']+ 1, 2);
+				$matchmonth = substr($list, $result['1']+ 4, 2);
+				$matchyear = substr($list, $result['1']+ 7, 2);
+				$matchdate = $matchyear."-".$matchmonth."-".$matchday;
+				$matchtime = substr($list, $result['1'] + 10, 5);
+				//print_r($matches2);
+
+				$matchdatecode = strtotime($matchdate);
+				$fromcode = strtotime($todaydate);
+				$tocode = strtotime($todaydate." + 1 week");
+				//echo "match: ".$matchdatecode."-".$fromcode."-".$tocode."<br>";
+				//echo "match: ".$matchdate."-".$matchtime."<br>";
+
+				// if it's not between the date range, then move on
+				if (($matchdatecode >= $fromcode) && ($matchdatecode <= $tocode)) {
+					// echo "match: ".$matchdatecode."-".$fromcode."-".$tocode."<br>";
+					// echo "match: ".$matchdate."-".$matchtime."<br>";
 				
-				// echo "Date and Time: ".$matchdate." ".$matchtime."<br>";
+					// echo "Date and Time: ".$matchdate." ".$matchtime."<br>";
 
-				// get the TeamA, TeamB, MatchNo and Location via Regex
-				$number3 = preg_match_all ('/Id=\d*" class="a_txt8">(.*?)[&<]/', substr($list, $result['1'], 2000), $matches3, PREG_OFFSET_CAPTURE);
-				if ($number !== FALSE) {
-					// write match date and time
-					// echo "Loc: ".."<br>";
-					// echo "TeamA: ".strtoupper(stripAccents($matches3[1][1][0]))."<br>";
-					$sbdevice = attributeSB($matches3[1][1][0]);
-					// echo "Answer: ".$answer;
-					// echo "TeamB: ".strtoupper(stripAccents($matches3[1][2][0]))."<br>";
-					$xml = $xml . "<match><date ".$sbdevice.">".$matchdate."</date ".$sbdevice."><time ".$sbdevice.">".$matchtime."</time ".$sbdevice.">";
-					$xml = $xml . "<Location ".$sbdevice.">".strtoupper(stripAccents($matches3[1][0][0]))."</Location ".$sbdevice.">";
-					$xml = $xml . "<TeamA ".$sbdevice.">".strtoupper(stripAccents($matches3[1][1][0]))."</TeamA ".$sbdevice.">";
-					$xml = $xml . "<TeamB ".$sbdevice.">".strtoupper(stripAccents($matches3[1][2][0]))."</TeamB ".$sbdevice.">";
+					// get the TeamA, TeamB, MatchNo and Location via Regex
+					$number3 = preg_match_all ('/Id=\d*" class="a_txt8">(.*?)[&<]/', substr($list, $result['1'], 2000), $matches3, PREG_OFFSET_CAPTURE);
+					if ($number !== FALSE) {
+						$sbdevice = '';
+						$xml = $xml . "<match><Date>".date('d.m.y',$matchdatecode)."</Date ><Time>".$matchtime."</Time>";
+						$xml = $xml . "<Location>".strtoupper(stripAccents($matches3[1][0][0]))."</Location>";
+						$xml = $xml . "<TeamA>".strtoupper(stripAccents($matches3[1][1][0]))."</TeamA>";
+						$xml = $xml . "<TeamB>".strtoupper(stripAccents($matches3[1][2][0]))."</TeamB>";
 
-					$number4 = preg_match('/www.youtube.com\/watch\?v=(.*)" target/', substr($list, $result['1'], 3100), $matches4, PREG_OFFSET_CAPTURE);
-					if (($number4 !== FALSE) && ($number4 > 0)) {
-						$xml = $xml . "<Youtube ".$sbdevice.">".$matches4[1][0]."</Youtube ".$sbdevice.">";
+						$number4 = preg_match('/www.youtube.com\/watch\?v=(.*)" target/', substr($list, $result['1'], 3100), $matches4, PREG_OFFSET_CAPTURE);
+						if (($number4 !== FALSE) && ($number4 > 0)) {
+							$xml = $xml . "<Youtube>".$matches4[1][0]."</Youtube>";
+						}
+						else {
+							$xml = $xml . "<Youtube> </Youtube>";
+						}
+
+						$number4 = preg_match('/www.fibalivestats.com\/u\/SUI\/(\d*)\/"/', substr($list, $result['1'], 3100), $matches4, PREG_OFFSET_CAPTURE);
+						if (($number4 !== FALSE) && ($number4 > 0)) {
+							$xml = $xml . "<LiveStat>".$matches4[1][0]."</LiveStat>";
+						}
+						else {
+							$xml = $xml . "<LiveStat> </LiveStat>";
+						}
+	
+						$xml = $xml . "</match>";
 					}
-					else {
-						$xml = $xml . "<Youtube ".$sbdevice."> </Youtube ".$sbdevice.">";
-					}
-
-
-					$number4 = preg_match('/www.fibalivestats.com\/u\/SUI\/(\d*)\/"/', substr($list, $result['1'], 3100), $matches4, PREG_OFFSET_CAPTURE);
-					if (($number4 !== FALSE) && ($number4 > 0)) {
-						$xml = $xml . "<LiveStat ".$sbdevice.">".$matches4[1][0]."</LiveStat ".$sbdevice.">";
-					}
-					else {
-						$xml = $xml . "<LiveStat ".$sbdevice."> </LiveStat ".$sbdevice.">";
-					}
-
-					$xml = $xml . "</match>";
 				}
 			}
 
@@ -122,7 +131,6 @@ function todaysmatches() {
 	}
 }
 
-$answer = todaysmatches();
-//echo "Answer: ".$answer;
+$answer = thisweeksmatches();
 
 ?>
