@@ -1,6 +1,7 @@
 <?php
 
 function broadcast2xml($yt_handle, $param) {
+	$htmlBody = '';
 	if (strtoupper($param) != 'ALL') {
 		$param = 'upcoming';
 	}
@@ -33,7 +34,6 @@ function broadcast2xml($yt_handle, $param) {
 		array(
 			'broadcastStatus' => $param,
 			'maxResults' => 50,
-			'pageToken' => $nextPageToken,
 		));
 
 		$nextPageToken = $broadcastsResponse['nextPageToken'];
@@ -110,25 +110,11 @@ function getClient() {
 
     // Refresh the token if it's expired.
     if ($client->isAccessTokenExpired()) {
-
-        // save refresh token to some variable
-        $refreshTokenSaved = $client->getRefreshToken();
-
-        // update access token
-        $client->fetchAccessTokenWithRefreshToken($refreshTokenSaved);
-
-        // pass access token to some variable
-        $accessTokenUpdated = $client->getAccessToken();
-
-        // append refresh token
-        $accessTokenUpdated['refresh_token'] = $refreshTokenSaved;
-
-        //Set the new acces token
-        $accessToken = $refreshTokenSaved;
-        $client->setAccessToken($accessToken);
-
-        // save to file
-        file_put_contents($credentialsPath, json_encode($accessTokenUpdated));
+		$oldAccessToken=$client->getAccessToken();
+		$client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+		$accessToken=$client->getAccessToken();
+		$accessToken['refresh_token']=$oldAccessToken['refresh_token'];
+		file_put_contents($credentialsPath, json_encode($accessToken));
     }
     return $client;
 }
@@ -156,7 +142,7 @@ if (!file_exists(__DIR__ . '/vendor/autoload.php')) {
 require_once __DIR__ . '/vendor/autoload.php';
 session_start();
 
-define('CREDENTIALS_PATH', 'php-yt-oauth2.json');
+define('CREDENTIALS_PATH', '/var/www/html/ytprog/php/php-yt-oauth2.json');
 /*
  * You can acquire an OAuth 2.0 client ID and client secret from the
  * {{ Google Cloud Console }} <{{ https://cloud.google.com/console }}>
@@ -213,13 +199,3 @@ END;
 END;
 }
 ?>
-
-<!doctype html>
-<html>
-<head>
-<title>My Live Broadcasts</title>
-</head>
-<body>
-  <?=$htmlBody?>
-</body>
-</html>
