@@ -1,11 +1,50 @@
 <?php
 
+// next functions needed for playlist attachment -- Google snipplets (unmodified)
 function playlistItemsInsert($service, $properties, $part, $params) {
 	$params = array_filter($params);
 	$propertyObject = createResource($properties); // See full sample for function
 	$resource = new Google_Service_YouTube_PlaylistItem($propertyObject);
 	$response = $service->playlistItems->insert($part, $resource, $params);
-	print_r($response);
+	//print_r($response);
+}
+
+// Build a resource based on a list of properties given as key-value pairs.
+function createResource($properties) {
+    $resource = array();
+    foreach ($properties as $prop => $value) {
+        if ($value) {
+            addPropertyToResource($resource, $prop, $value);
+        }
+    }
+    return $resource;
+}
+
+
+// Add a property to the resource.
+function addPropertyToResource(&$ref, $property, $value) {
+    $keys = explode(".", $property);
+    $is_array = false;
+    foreach ($keys as $key) {
+        // For properties that have array values, convert a name like
+        // "snippet.tags[]" to snippet.tags, and set a flag to handle
+        // the value as an array.
+        if (substr($key, -2) == "[]") {
+            $key = substr($key, 0, -2);
+            $is_array = true;
+        }
+        $ref = &$ref[$key];
+    }
+
+    // Set the property value. Make sure array values are handled properly.
+    if ($is_array && $value) {
+        $ref = $value;
+        $ref = explode(",", $value);
+    } elseif ($is_array) {
+        $ref = array();
+    } else {
+        $ref = $value;
+    }
 }
 
 //Section 2: IMAP
@@ -27,7 +66,7 @@ function save_mail($mail)
 function setresolution($SBCode) {
 	// set default
 	$SBCode = trim($SBCode);
-	//echo "SBCode: ".$SBCode."<br>";
+	//echo "SBCode: ".$SBCode."/n";
 	$ret_resolution = '1080p';
 	// list exceptions
 	$resolutions = array (
@@ -38,6 +77,8 @@ function setresolution($SBCode) {
 		array ('SB_RIVA','720p'),
 		array ('SB_ELITE','720p'),
 		array ('SB_NYON','720p'),
+		array ('SB_BIENNE','720p'),
+		array ('SB_BADEN','720p'),
 		array ('SB_LUGANO','720p'),
 		);
 		
@@ -63,7 +104,7 @@ function getClient() {
 
 	// Load previously authorized credentials from a file.
 	$credentialsPath = expandHomeDirectory(CREDENTIALS_PATH);
-	echo "cr: ".$credentialsPath."<br>";
+	// echo "cr: ".$credentialsPath."/n";
 	if (file_exists($credentialsPath)) {
 		$accessToken = json_decode(file_get_contents($credentialsPath), true);
 	} 
@@ -91,25 +132,11 @@ function getClient() {
 
     // Refresh the token if it's expired.
     if ($client->isAccessTokenExpired()) {
-
-        // save refresh token to some variable
-        $refreshTokenSaved = $client->getRefreshToken();
-
-        // update access token
-        $client->fetchAccessTokenWithRefreshToken($refreshTokenSaved);
-
-        // pass access token to some variable
-        $accessTokenUpdated = $client->getAccessToken();
-
-        // append refresh token
-        $accessTokenUpdated['refresh_token'] = $refreshTokenSaved;
-
-        //Set the new acces token
-        $accessToken = $refreshTokenSaved;
-        $client->setAccessToken($accessToken);
-
-        // save to file
-        file_put_contents($credentialsPath, json_encode($accessTokenUpdated));
+		$oldAccessToken=$client->getAccessToken();
+		$client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+		$accessToken=$client->getAccessToken();
+		$accessToken['refresh_token']=$oldAccessToken['refresh_token'];
+		file_put_contents($credentialsPath, json_encode($accessToken));
     }
     return $client;
 }
@@ -138,7 +165,7 @@ if (!file_exists(__DIR__ . '/vendor/autoload.php')) {
 
 require_once __DIR__ . '/vendor/autoload.php';
 session_start();
-define('CREDENTIALS_PATH', 'php-yt-oauth2.json');
+define('CREDENTIALS_PATH', '/var/www/html/ytprog/php/php-yt-oauth2.json');
 
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -183,6 +210,7 @@ if ($client->getAccessToken()) {
 	$yt_create = simplexml_load_file('/var/www/html/abcd/yt_create.xml');
 	if ($yt_create != False) {
 		$matchcounter = 0;
+		$message = "";
 		foreach ($yt_create->match as $match) {
 			try {
 				// Create an object for the liveBroadcast resource's snippet. Specify values
@@ -191,16 +219,19 @@ if ($client->getAccessToken()) {
 				// STEP 0: PREPARE DATA
 				//   TITLE (format: 'SB League - Day x: TeamA vs. TeamB')
 				$yt_title = $match->League2." - Day ".$match->Gameday.": ".$match->TeamAS." vs. ".$match->TeamBS;
-				//echo $yt_title."<br>";
+				//echo $yt_title."/n";
 				
 				//   DESCRIPTION (format: LongTeamA vs. LongTeamB <newline> Location - MatchNo)
 				$yt_description = $match->TeamA." vs. ".$match->TeamB."\n".$match->Location." - MatchNo: ".$match->GameId."\n";
-				//echo $yt_description."<br>";
+				//echo $yt_description."/n";
 			
+				// Youtube seems to add 1h when programming the matches
+				$Correction = -60 * 60;
+				
 				//   START AND END DATE (format: 15 mins before the match start and 2.5h duration)
-				$yt_starttime = date('Y-m-d\TH:i:s.s\Z', $match->Datecode - (15*60));
-				$yt_endtime = date('Y-m-d\TH:i:s.s\Z', $match->Datecode + (150*60));
-				//echo $yt_starttime."-".$yt_endtime."<br>";
+				$yt_starttime = date('Y-m-d\TH:i:s.s\Z', $match->Datecode + $Correction - (15*60));
+				$yt_endtime = date('Y-m-d\TH:i:s.s\Z', $match->Datecode + $Correction + (150*60));
+				//echo $yt_starttime."-".$yt_endtime."/n";
 				
 				//   CHANNEL
 				$yt_channel_id = 'UCgJw4GIqhkaIF7nYYqRI84w';
@@ -209,7 +240,7 @@ if ($client->getAccessToken()) {
 				$yt_tags = array($match->TeamA, $match->TeamB, $match->Location, $match->GameId, "Day - ".$match->Gameday);
 				
 				// STEP 1: CHECK IF BROADCAST IS ALREADY EXISTING
-				//echo "X: ".$yt_title."<br>";
+				//echo "X: ".$yt_title."/n";
 				$counter = 0;
 				$broadcastid = '';
 				
@@ -225,7 +256,7 @@ if ($client->getAccessToken()) {
 						// found existing broadcast, break look
 						$broadcastid = trim(htmlspecialchars($broadcastItem['id']));
 						$counter = 51;
-						echo "Existing broadcast ".$yt_title." with Id ".$broadcastItem['id']." found. No need to create<br>";
+						// echo "Existing broadcast ".$yt_title." with Id ".$broadcastItem['id']." found. No need to create/n";
 						break;
 					}
 				}	
@@ -240,7 +271,7 @@ if ($client->getAccessToken()) {
 							// found existing broadcast, break look
 							$broadcastid = trim(htmlspecialchars($broadcastItem['id']));
 							$counter = 51;
-							echo "Existing broadcast ".$yt_title." with Id ".$broadcastItem['id']." found. No need to create<br>";
+							// echo "Existing broadcast ".$yt_title." with Id ".$broadcastItem['id']." found. No need to create/n";
 							break;
 						}
 					}
@@ -281,11 +312,11 @@ if ($client->getAccessToken()) {
 
 					// Execute the request and return an object that contains information
 					// about the new broadcast.
-					echo "Broadcast ".$yt_title." to be created<br>";
-					echo $yt_title."<br>";
-					echo $yt_description."<br>";
-					echo $yt_starttime."<br>";
-					echo $yt_endtime."<br>";
+					/* echo "Broadcast ".$yt_title." to be created/n";
+					echo $yt_title."/n";
+					echo $yt_description."/n";
+					echo $yt_starttime."/n";
+					echo $yt_endtime."/n"; */
 					
 					$broadcastsResponse = $youtube->liveBroadcasts->insert('snippet,status',
 							$broadcastInsert, array());
@@ -302,7 +333,7 @@ if ($client->getAccessToken()) {
 						foreach ($streamsResponse['items'] as $streamItem) {
 						if ($streamItem['snippet']['title'] == $yt_streamname) {
 							// if found, then keep id for the bind later
-							echo "Stream ".$yt_streamname." already existing<br>";
+							// echo "Stream ".$yt_streamname." already existing/n";
 							break;
 						}
 						else {
@@ -328,7 +359,7 @@ if ($client->getAccessToken()) {
 							// Execute the request and return an object that contains information
 							// about the new stream.
 							
-							echo "stream ".$yt_streamname." creation<br>";
+							// echo "stream ".$yt_streamname." creation/n";
 							$streamsResponse = $youtube->liveStreams->insert('snippet,cdn',	$streamInsert, array());
 							break;
 						}	
@@ -341,7 +372,7 @@ if ($client->getAccessToken()) {
 						array(
 						'streamId' => $streamsResponse['id'],
 						));
-					echo "ResponseID: ".$broadcastsResponse['id']."/".$streamsResponse['id']."<br>";
+					// echo "ResponseID: ".$broadcastsResponse['id']."/".$streamsResponse['id']."/n";
 					
 					// STEP 4: INSERT VIDEO IN PLAYLIST
 					switch(strtoupper($match->League2)) {
@@ -377,9 +408,9 @@ if ($client->getAccessToken()) {
 									
 					// STEP 5: UPDATE THUMBNAILS AFTER HAVING OBTAINED THE VIDEO ID
 					$imagePath = "/var/www/html/thumbs/".$match->League."/".substr($match->TeamAS,0,3)."_".substr($match->TeamBS,0,3).".png";
-					// echo $imagePath."<br>";
+					// echo $imagePath."/n";
 					if (file_exists($imagePath)) {
-						// echo "Path valid<br>";
+						// echo "Path valid/n";
 						
 						// Specify the size of each chunk of data, in bytes. Set a higher value for
 						// reliable connection as fewer chunks lead to faster uploads. Set a lower
@@ -424,7 +455,7 @@ if ($client->getAccessToken()) {
 				}
 				if ($matchcounter == 0) {
 					// write header
-					$message =  '<html><body><h2>This is an automatically generated message showing all newly created matches</h2>';
+					$message =  '<html><body><h2>swissbasket.tv programmed matches for the forthcoming period</h2>';
 					$message .= '<table><tr><th>Date</th><th>Time</th><th>League</th><th>Location</th><th>Gameday</th>';
 					$message .= '<th>GameId</th><th>TeamA</th><th>TeamB</th><th>Livestat</th><th>Youtube</th>';
 				}
@@ -438,7 +469,7 @@ if ($client->getAccessToken()) {
 				$message .= '</tr>';
 			
 				$matchcounter += 1;
-				echo "counter: ".$matchcounter."<br>";
+				// echo "counter: ".$matchcounter."/n";
 				
 				
 			} catch (Google_Service_Exception $e) {
@@ -468,7 +499,7 @@ if ($client->getAccessToken()) {
 		$mail->addAddress('thomas.kohler@swissbasketball.ch', 'Thomas Kohler');
 		$mail->addAddress('swissbasketball@diya.pro', 'Andriy Kryvoruchko');
 		$mail->Subject = 'Weekly swissbaskettv programming on youtube';
-		// echo "Message<br>";
+		// echo "Message/n";
 		// echo $message;
 		$mail->msgHTML($message);
 		$mail->AltBody = 'Weekly swissbaskettv programming on youtube';
@@ -478,12 +509,11 @@ if ($client->getAccessToken()) {
 			echo "Mailer Error: " . $mail->ErrorInfo;
 		} else {
 			echo "Message sent!";
-			//Section 2: IMAP
-			//Uncomment these to save your message in the 'Sent Mail' folder.
+			//Section save via IMAP
 			if (save_mail($mail)) {
 			    echo "Message saved!";
 			}
-		}		
+		}
 	}
 	else {
 		$htmlBody = "XML Faulty";
@@ -509,13 +539,3 @@ END;
 END;
 }
 ?>
-
-<!doctype html>
-<html>
-<head>
-<title>Bound Live Broadcast</title>
-</head>
-<body>
-  <?=$htmlBody?>
-</body>
-</html>
