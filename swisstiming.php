@@ -17,10 +17,55 @@ function hex2str($hex) {
 }
 
 function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB, $period, $gamestatus, $timeout, $timer, $timestamp, $panelname, $timeoutDuration, $ballTime) {
+	// TK Insert: initialise status variable
+	$status = 0;
 	$scoreA = preg_replace('/[\x00-\x1F\x7F]/u', '', $scoreA);
 	$scoreB = preg_replace('/[\x00-\x1F\x7F]/u', '', $scoreB);
 	$foulA = preg_replace('/[\x00-\x1F\x7F]/u', '', $foulA);
+	// TK Insert - Symbolic Foul Element
+	$charact = 42;
+	switch ($foulA) {
+		case 1:
+			$foulAS = chr($charact);
+			break;
+		case 2:
+			$foulAS = chr($charact).chr($charact);
+			break;
+		case 3:
+			$foulAS = chr($charact).chr($charact).chr($charact);
+			break;
+		case 4:
+			$foulAS = chr($charact).chr($charact).chr($charact).chr($charact);
+			break;
+		case 5:
+			$foulAS = chr($charact).chr($charact).chr($charact).chr($charact).chr($charact);
+			break;
+		default:
+			$foulAS = ' ';
+			break;
+	}
 	$foulB = preg_replace('/[\x00-\x1F\x7F]/u', '', $foulB);
+	// TK Insert - Symbolic Foul Element
+	switch ($foulB) {
+		case 1:
+			$foulBS = chr($charact);
+			break;
+		case 2:
+			$foulBS = chr($charact).chr($charact);
+			break;
+		case 3:
+			$foulBS = chr($charact).chr($charact).chr($charact);
+			break;
+		case 4:
+			$foulBS = chr($charact).chr($charact).chr($charact).chr($charact);
+			break;
+		case 5:
+			$foulBS = chr($charact).chr($charact).chr($charact).chr($charact).chr($charact);
+			break;
+		default:
+			$foulBS = ' ';
+			break;
+	}
 	$timeoutA = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeoutA);
 	$timeoutB = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeoutB);
 	$period = preg_replace('/[\x00-\x1F\x7F]/u', '', $period);
@@ -32,32 +77,46 @@ function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB,
 	$timeoutDuration = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeoutDuration);
 	$ballTime = preg_replace('/[\x00-\x1F\x7F]/u', '', $ballTime);
 
-	if($period == "" || $period == "0" || $period == ".") {
+	// TK insert: improved rule to detect faulty records
+	if ((!is_numeric($period)) or (!is_numeric($ballTime))) {
 		$status = 1;
 	} 
 
-
-	if($timeoutA == "" || $timeoutB == "") {
-		$status = 1;
+	if ((!is_numeric($timeoutA)) or (!is_numeric($timeoutB)))  {
+		$status = 2;
 	}
 
-	if($foulA == "" || $foulB == "") {
-		$status = 1;
+	if ((!is_numeric($foulA)) or (!is_numeric($foulB))) {
+		$status = 3;
 	}
 
-	if($scoreA == 0 || $scoreB == 0 || $scoreA > 140 || $scoreB > 140) {
-		$status = 1;
+	if ((!is_numeric($scoreA)) or (!is_numeric($scoreB))) {
+		$status = 4;
+	}
+	
+	// Timer > 1 minute with : divider
+	if (substr($timer,2,1) == ':') {
+		if ((!is_numeric(substr($timer,0,2))) or (!is_numeric(substr($timer,3,2)))) {
+			$status = 5;
+		}
+	}
+	// Timer < 1 minute with . divider
+	if (strpos(trim($timer),'.') !== false) {
+		if (!is_numeric(trim($timer))) {
+			$status = 6;
+		}
 	}
 
-
-	if($status == 1) {
-		die("An error has occured. The script couldn't continue");
+	//file_put_contents("debut.txt", $status);
+	if($status > 0) {
+		die("Invalid Input. Code: ".$status." - Aborted...");
+		
 	}
 
-	$document = "<document><event><TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulB>$foulB</TeamFoulB><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$ballTime</ShotClock><UTCTime>$timestamp</UTCTime></event></document>";
+	$document = "<document><event><TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulB>$foulB</TeamFoulB><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulBS>$foulBS</TeamFoulBS><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$ballTime</ShotClock><UTCTime>$timestamp</UTCTime></event></document>";
 	$filename = $panelname.'-lastaction.xml';
 	file_put_contents($filename, $document);
-	return "<TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulB>$foulB</TeamFoulB><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$ballTime</ShotClock>";
+	return "<TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulB>$foulB</TeamFoulB><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulBS>$foulBS</TeamFoulBS><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$ballTime</ShotClock>";
 }
 
 function dbw($beginning, $end, $string) {
