@@ -18,10 +18,56 @@ function hex2str($hex) {
 }
 
 function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB, $period, $gamestatus, $timeout, $timer, $timestamp, $panelname, $timeoutDuration, $shotClock) {
+
+	// TK Insert: initialise status variable
+	$status = 0;
 	$scoreA = preg_replace('/[\x00-\x1F\x7F]/u', '', $scoreA);
 	$scoreB = preg_replace('/[\x00-\x1F\x7F]/u', '', $scoreB);
 	$foulA = preg_replace('/[\x00-\x1F\x7F]/u', '', $foulA);
+	// TK Insert - Symbolic Foul Element
+	$charact = 42;
+	switch ($foulA) {
+		case 1:
+			$foulAS = chr($charact);
+			break;
+		case 2:
+			$foulAS = chr($charact).chr($charact);
+			break;
+		case 3:
+			$foulAS = chr($charact).chr($charact).chr($charact);
+			break;
+		case 4:
+			$foulAS = chr($charact).chr($charact).chr($charact).chr($charact);
+			break;
+		case 5:
+			$foulAS = chr($charact).chr($charact).chr($charact).chr($charact).chr($charact);
+			break;
+		default:
+			$foulAS = ' ';
+			break;
+	}
 	$foulB = preg_replace('/[\x00-\x1F\x7F]/u', '', $foulB);
+	// TK Insert - Symbolic Foul Element
+	switch ($foulB) {
+		case 1:
+			$foulBS = chr($charact);
+			break;
+		case 2:
+			$foulBS = chr($charact).chr($charact);
+			break;
+		case 3:
+			$foulBS = chr($charact).chr($charact).chr($charact);
+			break;
+		case 4:
+			$foulBS = chr($charact).chr($charact).chr($charact).chr($charact);
+			break;
+		case 5:
+			$foulBS = chr($charact).chr($charact).chr($charact).chr($charact).chr($charact);
+			break;
+		default:
+			$foulBS = ' ';
+			break;
+	}
 	$timeoutA = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeoutA);
 	$timeoutB = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeoutB);
 	$period = preg_replace('/[\x00-\x1F\x7F]/u', '', $period);
@@ -33,45 +79,12 @@ function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB,
 	$timeoutDuration = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeoutDuration);
 	$shotClock = preg_replace('/[\x00-\x1F\x7F]/u', '', $shotClock);
 
-	if($period == "" || $period == "0") {
-		$status = 1;
-	} 
+	
 
-	if(strpos($timer, ":") !== false) {
-		$temptimer = str_replace(":", "", $timer);
-		if(strlen($temptimer) != 4) {
-			$status = 1;
-		}
-	} elseif(strpos($timer, ",") !== false) {
-		$temptimer = str_replace(",", "", $timer);
-		if(strlen($temptimer) != 3 && strlen($temptimer) != 2) {
-			$status = 1;
-		}
-	} else {
-		$status = 1;
-	}
-
-
-	if($timeoutA == "" || $timeoutB == "") {
-		$status = 1;
-	}
-
-	if($foulA == "" || $foulB == "") {
-		$status = 1;
-	}
-
-	if($scoreA == 0 || $scoreB == 0) {
-		$status = 1;
-	}
-
-	if($status == 1) {
-		die("An error has occured. The script couldn't continue");
-	}
-
-	$document = "<document><event><TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulB>$foulB</TeamFoulB><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$shotClock</ShotClock><UTCTime>$timestamp</UTCTime></event></document>";
+	$document = "<document><event><TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulB>$foulB</TeamFoulB><TeamFoulBS>$foulBS</TeamFoulBS><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$shotClock</ShotClock><UTCTime>$timestamp</UTCTime></event></document>";
 	$filename = $panelname.'-lastaction.xml';
 	file_put_contents($filename, $document);
-	return "<TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulB>$foulB</TeamFoulB><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$shotClock</ShotClock>";
+	return "<TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulB>$foulB</TeamFoulB><TeamFoulBS>$foulBS</TeamFoulBS><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$shotClock</ShotClock>";
 }
 
 function dbw($beginning, $end, $string) {
@@ -85,11 +98,23 @@ function dbw($beginning, $end, $string) {
 
   return str_replace($textToDelete, '', $string);
 }
+
 //Mobatime Reader - 31/10/2017 - Thomas Gervaise - gervaise.thomas41@gmail.com
+// TK: variable init
+$panel_name = "";
+$SBTime = 0;
 
 foreach(getallheaders() as $name => $value) {
+	// TK: gets Device_ID from header on which to build the filename
 	if($name == "Device_ID") {
 		$panel_name = $value;
+	}
+	// TK: gets the original UTC time from Scorebug that is closer to original time than the server time
+	if($name == "UTCTime") {
+		// TK: needs to be a numeric timestamp
+		if (is_numeric($SBTime)) {
+			$SBTime = $value;
+		}
 	}
 }
 
@@ -98,6 +123,7 @@ if(strpos(file_get_contents("php://input"), "01 7F 02 47") !== false) {
 } else {
 	$content = strtoupper(bin2hex(file_get_contents("php://input")));
 	$content = chunk_split($content, 2, ' ');
+	$content = $content;
 }
 
 $hexfile = file_get_contents($panel_name.'-'.date('Y-m-d', time()).'-packets.txt');
@@ -107,7 +133,6 @@ $logfile .= "\n [".date('H:i:s', time())."] - Received ".file_get_contents("php:
 file_put_contents("logs.txt", $logfile);
 file_put_contents($panel_name.'-'.date('Y-m-d', time()).'-packets.txt', $hexfile);
 $myinput = $hexfile;
-//$myinput = file_get_contents("matchrecord.txt");
 
 $getScore = GetBetween($myinput, "01 7F 02 47 33 30 35 ", "01 7F 02 47");
 $getScore = explode(" ", $getScore);
@@ -166,7 +191,19 @@ if($timeout[4] == '44') {
 } else {
 	$timer = trim(hex2str($tmp1.$tmp2.'3A'.$tmp3.$tmp4));
 }
-$timestamp = date('Y-m-d H:i:s', time());
+
+// TK: put timestamp - originally the server time but better to take the scorebug time (without the latency)
+if ($SBTime > 0) {
+	$timestamp = date('Y-m-d H:i:s', $SBTime);
+}
+else {
+	$timestamp = date('Y-m-d H:i:s', time());
+}
+// TK: debug
+//$tsp = microtime(true);
+//$tdiff = $tsp-$SBTime;
+//$time_output = "SB: ".$SBTime." - Server: ".$tsp." - Diff: ".$tdiff;
+//file_put_contents("timecomparison.txt", $time_output);
 
 $runningTimeout = GetBetween($myinput, "01 7F 02 47 31 39 35 ", "01 7F 02 47");
 $runningTimeout = explode(" ", $runningTimeout);
@@ -186,8 +223,6 @@ if($flag == 1) {
 } else {
 	$shotclock = hex2str($timeouts[1].$timeouts[2]);
 }
-
-
 
 $lastActionXML = generateLastAct($homeScore, $extScore, $homeFouls, $extFouls, $homeTimeout, $extTimeout, $period, $gameStatus, $runningTimeout, $timer, $timestamp, $panel_name, $timeoutTimer, $shotclock);
 
@@ -209,16 +244,25 @@ $docRest = '<PlayerinfoA>%PINFOA%</PlayerinfoA><PlayerinfoB>%PINFOB%</Playerinfo
 
 
 $homeFouls = GetBetween($myinput, "01 7F 02 47 33 33 35 ", "01 7F 02 47");
+$homeFoulsHx = $homeFouls;
 $homeFouls = explode(" ", $homeFouls);
 $extFouls = GetBetween($myinput, "01 7F 02 47 33 34 35 ", "01 7F 02 47");
+$extFoulsHx = $extFouls;
 $extFouls = explode(" ", $extFouls);
 $homeNumbers = GetBetween($myinput, "01 7F 02 47 33 37 ", "01 7F 02 47");
+$homeNumbersHx = $homeNumbers;
 $homeNumbers = explode(" ", $homeNumbers);
 $extNumbers = GetBetween($myinput, "01 7F 02 47 33 38 ", "01 7F 02 47");
+$extNumbersHx = $extNumbers;
 $extNumbers = explode(" ", $extNumbers);
 
+// TK: inserted $countmax to avoid counting outside bounds
 $playerA = "";
-for($i = 4; $i<=15; $i++) {
+$countmaxF = count($homeFouls);
+$countmaxN = count($homeNumbers);
+$number = "";
+
+for($i = 4; $i<=$countmaxF; $i++) {
 
 	$fouls = $homeFouls[$i-4];
 	if($fouls == "80") {
@@ -238,14 +282,26 @@ for($i = 4; $i<=15; $i++) {
 	} else {
 		$fouls = "Unknown";
 	}
-	$number = hex2str($homeNumbers[$i-4].$homeNumbers[$i-3]);
+	if (($countmaxN - $i) > 0) {
+		$number = hex2str($homeNumbers[$i-4].$homeNumbers[$i-3]);
+	}
+	else {
+		$number = "0";
+	}
+		
 	$playerA .= "<ShirtNo>$number</ShirtNo><Points>0</Points><Fouls>$fouls</Fouls>";
 }
 
+// TK: section corrected as it referenced to homeFouls rather than extFouls (copy-paste error)
+// TK: inserted $countmax to avoid counting outside bounds
 $playerB = "";
-for($i = 4; $i<=15; $i++) {
+$countmaxF = count($extFouls);
+$countmaxN = count($extNumbers);
+$number = "";
 
-	$fouls = $homeFouls[$i-4];
+for($i = 4; $i<=$countmaxF; $i++) {
+
+	$fouls = $extFouls[$i-4];
 	if($fouls == "80") {
 		$fouls = 0;
 	} elseif($fouls == "84") {
@@ -263,23 +319,38 @@ for($i = 4; $i<=15; $i++) {
 	} else {
 		$fouls = "Unknown";
 	}
-	$number = hex2str($homeNumbers[$i-4].$homeNumbers[$i-3]);
+	if (($countmaxN - $i) > 0) {
+		$number = hex2str($extNumbers[$i-4].$extNumbers[$i-3]);
+	}
+	else {
+		$number = "0";
+	}
+		
 	$playerB .= "<ShirtNo>$number</ShirtNo><Points>0</Points><Fouls>$fouls</Fouls>";
 }
+$temp = file_get_contents("players.txt");
+file_put_contents("players.txt", $temp.$homeFoulsHx."-".$extFoulsHx."-".$homeNumbersHx."-".$extNumbersHx."\n");
+// "\n\n".print_r($homeFouls)."\n".print_r($homeNumbers)."\n".print_r($extFouls)."\n".print_r($extNumbers)."\n"
 
 $getScores = explode("01 7F 02 47 35 36 35 ", $myinput);
 foreach($getScores as $score) {
 	$score = explode("01 7F", $score);
 	$score = explode(" ", $score[0]);
-	$playerId = hex2str($score[1].$score[2]);
+	// file_put_contents("debug.txt", "Count: ".count($score));
+	if (count($score) == 1){
+		$playerId = hex2str($score[1]);
+	}
+	else {
+		$playerId = hex2str($score[1].$score[2]);
+	}
 	$stringtofind = "$playerId</ShirtNo><Points>";
 	$lenstring = count($stringtofind);
 	if(hex2str($score[0]) == 1) {
 		$position = strpos($playerA, $stringtofind);
-		$playerA = substr_replace($playerA, hex2str($score[3].$score[4]), $position+$count, 0);
+		$playerA = substr_replace($playerA, hex2str($score[3].$score[4]), $position, 0);
 	} elseif(hex2str($score[0]) == 2) {
 		$position = strpos($playerB, $stringtofind);
-		$playerB = substr_replace($playerB, hex2str($score[3].$score[4]), $position+$count, 0);
+		$playerB = substr_replace($playerB, hex2str($score[3].$score[4]), $position, 0);
 	} 
 }
 
