@@ -2,7 +2,7 @@
 # Reads serial data and pushes it via HTTP POST onto the net
 # runs on Raspberry Pi
 # Thomas Kohler (C) 2017/2018
-# Version 1.3 / 03-01-2018
+# Version 1.4 / 10-05-2018
 
 # imports
 import serial
@@ -46,12 +46,12 @@ BaudRate = 9600
 PackageByTime = 0.1
 # PackageByLength*	Length (in bytes) of data input
 # until a package is closed and sent off
-PackageByLength = 64
+PackageByLength = 128
 
 # RequestMode: GET or POST
 RequestMode = 'POST'
-# RequestServer: Server IP or Name
-RequestServer = 'swb.world'
+# RequestServer: Server IP or Name (Amazon EC2)
+RequestServer = '35.158.65.6'
 # RequestPort: Port over which HTTP request is being placed
 RequestPort = 80
 # RequestURL (Default)
