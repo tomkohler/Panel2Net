@@ -2,11 +2,14 @@
 
 
 function stripAccents($stripAccents){
-  return strtr($stripAccents,'‡·‚„‰ÁËÈÍÎÏÌÓÔÒÚÛÙıˆ˘˙˚¸˝ˇ¿¡¬√ƒ«»… ÀÃÕŒœ—“”‘’÷Ÿ⁄€‹›','aaaaaceeeeiiiinooooouuuuyyAAAAACEEEEIIIINOOOOOUUUUY');
+  
+  //return strtr($stripAccents,'√†√°√¢√£√§√ß√®√©√™√´√¨√≠√Æ√Ø√±√≤√≥√¥√µ√∂√π√∫√ª√º√Ω√ø√Ä√Å√Ç√É√Ñ√á√à√â√ä√ã√å√ç√é√è√ë√í√ì√î√ï√ñ√ô√ö√õ√ú√ù','aaaaaceeeeiiiinooooouuuuyyAAAAACEEEEIIIINOOOOOUUUUY');
+  //does only work if there is setlocale(LC_CTYPE, 'en_US.UTF8'); at the beginning of the script, replaced the above that did not work on AWS
+  return iconv('utf-8', 'ascii//TRANSLIT', $stripAccents);
 }
 
 function shortname($teamname) {
-	$sblist = array('LAKERS', 'MARTIGNY', 'LUZERN', 'ARLESHEIM', 'CASSARATE', 'MENDRISIOTTO', 'PRILLY', 'COSSONAY', 'CAROUGE', 'BLONAY', 'DEL', 'SION', 'BIENNE', 'BCKE', 'ARBEDO', 'HELIOS', 'MONTHEY', 'LAKERS', 'BASEL', 'VILLARS', 'WINTERTHUR', 'BELLINZONA', 'MEYRIN', 'BADEN', 'PULLY', 'BONCOURT', 'MASSAGNO', 'RIVA','ELITE', 'NEUCHATEL', 'NYON', 'CENTRAL', 'TROISTORRENTS', 'LUGANO', 'ZURICH', 'AARAU', 'MORGES', 'COLLOMBEY', 'SION', 'FRIBOURG', 'LAUSANNE', 'GENEVE');
+	$sblist = array('LAKERS', 'MARTIGNY', 'LUZERN', 'ARLESHEIM', 'CASSARATE', 'MENDRISIOTTO', 'PRILLY', 'COSSONAY', 'CAROUGE', 'BLONAY', 'DEL', 'SION', 'BIENNE', 'BCKE', 'ARBEDO', 'HELIOS', 'MONTHEY', 'LAKERS', 'BASEL', 'VILLARS', 'WINTERTHUR', 'BELLINZONA', 'MEYRIN', 'BADEN', 'PULLY', 'BONCOURT', 'MASSAGNO', 'RIVA','ELITE', 'NEUCHATEL', 'NYON', 'CENTRAL', 'TROISTORRENTS', 'LUGANO', 'ZURICH', 'AARAU', 'MORGES', 'COLLOMBEY', 'SION', 'FRIBOURG', 'LAUSANNE', 'GENEVE', 'BERNEX', 'CHENE', 'AGAUNE', 'RENENS', 'SARINE');
 
 	$returnvalue = '';
 	$teamname = strtoupper(stripAccents($teamname));
@@ -100,6 +103,7 @@ function attributeSB($teamName, $league) {
 
 function todaysmatches() {
 	// Initialisation
+	setlocale(LC_CTYPE, 'en_US.UTF8');
 	date_default_timezone_set ('Europe/Zurich');
 	$futuretimestamp = strtotime('+24 hours');	
 	$matchfilename = '/var/www/html/abcd/matches2day.xml';
@@ -260,6 +264,10 @@ function todaysmatches() {
 					
 					//echo $output."<br>";
 					$input = preg_replace ('!\s+!', ' ', substr($list, $result['1'], 2000));
+					//$debug = file_get_contents('input.txt');
+					//$debug .= $input;
+					//file_put_contents('input.txt', $debug);
+					
 					$number3 = preg_match_all ('/Id=\d*" class="a_txt8">(.*?)[&<]/', $input, $matches3, PREG_OFFSET_CAPTURE);
 					// write match date and time
 					// echo "Loc: ".."<br>";
@@ -274,6 +282,7 @@ function todaysmatches() {
 					$xmlrec .= "<League id='".$sbname."'>".substr($league,0,15)."</League>\n";
 					$xmlrec .= "<League2 id='".$sbname."'>".convertleague(substr($league,0,15))."</League2>\n";
 					$xmlrec .= "<Location id='".$sbname."'>".strtoupper(stripAccents($matches3[1][2][0]))."</Location>\n";
+					//echo "Location: ".$matches3[1][2][0]." - ".stripAccents($matches3[1][2][0])." - ".strtoupper(stripAccents($matches3[1][2][0]));
 					if (is_numeric(filter_var($matches3[1][0][0], FILTER_SANITIZE_NUMBER_INT))) {
 						$xmlrec .= "<Gameday id='".$sbname."'>".filter_var($matches3[1][0][0], FILTER_SANITIZE_NUMBER_INT)."</Gameday>\n";
 					} else {
@@ -314,7 +323,7 @@ function todaysmatches() {
 					}
 					$xmlrec .= "<SBFile id='".$sbname."'>".$sbdata."</SBFile>\n";
 					
-					// get livestat number
+					// get livestat ID
 					$number4 = preg_match('/www.fibalivestats.com\/u\/SUI\/(\d*)\/"/', substr($list, $result['1'], 3100), $matches4, PREG_OFFSET_CAPTURE);
 					if (($number4 !== FALSE) && ($number4 > 0)) {
 						$xmlrec .= "<LiveStat id='".$sbname."'>".$matches4[1][0]."</LiveStat>\n";
@@ -323,6 +332,7 @@ function todaysmatches() {
 						$xmlrec .= "<LiveStat id='".$sbname."'> </LiveStat>\n";
 					}
 					
+					// get youtube ID
 					$number5 = preg_match('/www.youtube.com\/watch\?v=(.*)" target/', substr($list, $result['1'], 3100), $matches5, PREG_OFFSET_CAPTURE);
 					if (($number5 !== FALSE) && ($number5 > 0)) {
 						$xmlrec .= "<Youtube id='".$sbname."'>".$matches5[1][0]."</Youtube>\n";
@@ -347,6 +357,8 @@ function todaysmatches() {
 				}			
 			}
 
+			//echo "XML_CUT: ".$xml_cut;
+			//echo "XML_CRE: ".$xml_create;
 			if ($xml_cut != '') {
 				file_put_contents($ytcut_filename, '<?xml version="1.0"?><document>'.$xml_cut."</document>");
 			}
