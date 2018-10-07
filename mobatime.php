@@ -26,24 +26,34 @@ function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB,
 	$foulA = preg_replace('/[\x00-\x1F\x7F]/u', '', $foulA);
 	// TK Insert - Symbolic Foul Element
 	$charact = 42;
+	$charact2 = 45;
+	$BonusA = ' ';
+	$BonusB = ' ';
 	switch ($foulA) {
 		case 1:
 			$foulAS = chr($charact);
+			$foulAS2 = chr($charact2);
 			break;
 		case 2:
 			$foulAS = chr($charact).chr($charact);
+			$foulAS2 = chr($charact2).chr($charact2);
 			break;
 		case 3:
 			$foulAS = chr($charact).chr($charact).chr($charact);
+			$foulAS2 = chr($charact2).chr($charact2).chr($charact2);
 			break;
 		case 4:
 			$foulAS = chr($charact).chr($charact).chr($charact).chr($charact);
+			$foulAS2 = chr($charact2).chr($charact2).chr($charact2).chr($charact2);
 			break;
 		case 5:
 			$foulAS = chr($charact).chr($charact).chr($charact).chr($charact).chr($charact);
+			$foulAS2 = chr($charact2).chr($charact2).chr($charact2).chr($charact2).chr($charact2);
+			$BonusA = 'Bonus';
 			break;
 		default:
 			$foulAS = ' ';
+			$foulAS2 = ' ';
 			break;
 	}
 	$foulB = preg_replace('/[\x00-\x1F\x7F]/u', '', $foulB);
@@ -51,23 +61,31 @@ function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB,
 	switch ($foulB) {
 		case 1:
 			$foulBS = chr($charact);
+			$foulBS2 = chr($charact2);
 			break;
 		case 2:
 			$foulBS = chr($charact).chr($charact);
+			$foulBS2 = chr($charact2).chr($charact2);
 			break;
 		case 3:
 			$foulBS = chr($charact).chr($charact).chr($charact);
+			$foulBS2 = chr($charact2).chr($charact2).chr($charact2);
 			break;
 		case 4:
 			$foulBS = chr($charact).chr($charact).chr($charact).chr($charact);
+			$foulBS2 = chr($charact2).chr($charact2).chr($charact2).chr($charact2);
 			break;
 		case 5:
 			$foulBS = chr($charact).chr($charact).chr($charact).chr($charact).chr($charact);
+			$foulBS2 = chr($charact2).chr($charact2).chr($charact2).chr($charact2).chr($charact2);
+			$BonusB = 'Bonus';
 			break;
 		default:
 			$foulBS = ' ';
+			$foulBS2 = ' ';
 			break;
 	}
+	
 	$timeoutA = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeoutA);
 	$timeoutB = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeoutB);
 	$period = preg_replace('/[\x00-\x1F\x7F]/u', '', $period);
@@ -79,12 +97,10 @@ function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB,
 	$timeoutDuration = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeoutDuration);
 	$shotClock = preg_replace('/[\x00-\x1F\x7F]/u', '', $shotClock);
 
-	
-
-	$document = "<document><event><TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulB>$foulB</TeamFoulB><TeamFoulBS>$foulBS</TeamFoulBS><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$shotClock</ShotClock><UTCTime>$timestamp</UTCTime></event></document>";
+	$document = "<document><event><TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulB>$foulB</TeamFoulB><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulBS>$foulBS</TeamFoulBS><TeamFoulAS2>$foulAS2</TeamFoulAS2><TeamFoulBS2>$foulBS2</TeamFoulBS2><BonusA>$BonusA</BonusA><BonusB>$BonusB</BonusB><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$shotClock</ShotClock><UTCTime>$timestamp</UTCTime></event></document>";
 	$filename = $panelname.'-lastaction.xml';
 	file_put_contents($filename, $document);
-	return "<TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulB>$foulB</TeamFoulB><TeamFoulBS>$foulBS</TeamFoulBS><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$shotClock</ShotClock>";
+	return "<TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulB>$foulB</TeamFoulB><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulBS>$foulBS</TeamFoulBS><TeamFoulAS2>$foulAS2</TeamFoulAS2><TeamFoulBS2>$foulBS2</TeamFoulBS2><BonusA>$BonusA</BonusA><BonusB>$BonusB</BonusB><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$shotClock</ShotClock>";
 }
 
 function dbw($beginning, $end, $string) {
@@ -226,6 +242,10 @@ if($flag == 1) {
 
 $lastActionXML = generateLastAct($homeScore, $extScore, $homeFouls, $extFouls, $homeTimeout, $extTimeout, $period, $gameStatus, $runningTimeout, $timer, $timestamp, $panel_name, $timeoutTimer, $shotclock);
 
+
+//debug
+//$temp = file_get_contents('debug.txt');
+
 $fileName = $panel_name.'-'.date('Y-m-d', time()).'.xml';
 if(file_exists($fileName)) {
 	$fileContent = file_get_contents($fileName);
@@ -235,10 +255,18 @@ if(file_exists($fileName)) {
 }
 if(strpos($fileContent, $lastActionXML)) {
 	echo "No new event detected. Skipping this part";
+	//debug
+	//$temp .= "No new event detected. Skipping this part";
+	
 } else {
+	//debug
+	//$temp .= $lastActionXML;
 	$lastEventPos = strrpos($fileContent, "</playbyplay>");
 	$fileContent = substr_replace($fileContent, "<event>".$lastActionXML."<UTCTime>$timestamp</UTCTime></event>", $lastEventPos, 0);
 }
+
+//debugging data
+//file_put_contents('debug.txt', $temp);
 
 $docRest = '<PlayerinfoA>%PINFOA%</PlayerinfoA><PlayerinfoB>%PINFOB%</PlayerinfoB>';
 
@@ -328,8 +356,8 @@ for($i = 4; $i<=$countmaxF; $i++) {
 		
 	$playerB .= "<ShirtNo>$number</ShirtNo><Points>0</Points><Fouls>$fouls</Fouls>";
 }
-$temp = file_get_contents("players.txt");
-file_put_contents("players.txt", $temp.$homeFoulsHx."-".$extFoulsHx."-".$homeNumbersHx."-".$extNumbersHx."\n");
+//$temp = file_get_contents("players.txt");
+//file_put_contents("players.txt", $temp.$homeFoulsHx."-".$extFoulsHx."-".$homeNumbersHx."-".$extNumbersHx."\n");
 // "\n\n".print_r($homeFouls)."\n".print_r($homeNumbers)."\n".print_r($extFouls)."\n".print_r($extNumbers)."\n"
 
 $getScores = explode("01 7F 02 47 35 36 35 ", $myinput);
@@ -344,7 +372,7 @@ foreach($getScores as $score) {
 		$playerId = hex2str($score[1].$score[2]);
 	}
 	$stringtofind = "$playerId</ShirtNo><Points>";
-	$lenstring = count($stringtofind);
+	//$lenstring = count($stringtofind);
 	if(hex2str($score[0]) == 1) {
 		$position = strpos($playerA, $stringtofind);
 		$playerA = substr_replace($playerA, hex2str($score[3].$score[4]), $position, 0);

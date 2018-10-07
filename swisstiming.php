@@ -16,7 +16,7 @@ function hex2str($hex) {
     return $str;
 }
 
-function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB, $period, $gamestatus, $timeout, $timer, $timestamp, $panelname, $timeoutDuration, $ballTime) {
+function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB, $period, $gamestatus, $timeout, $timer, $timestamp, $panelname, $timeoutDuration, $shotClock) {
 	// TK Insert: initialise status variable
 	$status = 0;
 	$scoreA = preg_replace('/[\x00-\x1F\x7F]/u', '', $scoreA);
@@ -24,24 +24,34 @@ function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB,
 	$foulA = preg_replace('/[\x00-\x1F\x7F]/u', '', $foulA);
 	// TK Insert - Symbolic Foul Element
 	$charact = 42;
+	$charact2 = 45;
+	$BonusA = ' ';
+	$BonusB = ' ';
 	switch ($foulA) {
 		case 1:
 			$foulAS = chr($charact);
+			$foulAS2 = chr($charact2);
 			break;
 		case 2:
 			$foulAS = chr($charact).chr($charact);
+			$foulAS2 = chr($charact2).chr($charact2);
 			break;
 		case 3:
 			$foulAS = chr($charact).chr($charact).chr($charact);
+			$foulAS2 = chr($charact2).chr($charact2).chr($charact2);
 			break;
 		case 4:
 			$foulAS = chr($charact).chr($charact).chr($charact).chr($charact);
+			$foulAS2 = chr($charact2).chr($charact2).chr($charact2).chr($charact2);
 			break;
 		case 5:
 			$foulAS = chr($charact).chr($charact).chr($charact).chr($charact).chr($charact);
+			$foulAS2 = chr($charact2).chr($charact2).chr($charact2).chr($charact2).chr($charact2);
+			$BonusA = 'Bonus';
 			break;
 		default:
 			$foulAS = ' ';
+			$foulAS2 = ' ';
 			break;
 	}
 	$foulB = preg_replace('/[\x00-\x1F\x7F]/u', '', $foulB);
@@ -49,23 +59,31 @@ function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB,
 	switch ($foulB) {
 		case 1:
 			$foulBS = chr($charact);
+			$foulBS2 = chr($charact2);
 			break;
 		case 2:
 			$foulBS = chr($charact).chr($charact);
+			$foulBS2 = chr($charact2).chr($charact2);
 			break;
 		case 3:
 			$foulBS = chr($charact).chr($charact).chr($charact);
+			$foulBS2 = chr($charact2).chr($charact2).chr($charact2);
 			break;
 		case 4:
 			$foulBS = chr($charact).chr($charact).chr($charact).chr($charact);
+			$foulBS2 = chr($charact2).chr($charact2).chr($charact2).chr($charact2);
 			break;
 		case 5:
 			$foulBS = chr($charact).chr($charact).chr($charact).chr($charact).chr($charact);
+			$foulBS2 = chr($charact2).chr($charact2).chr($charact2).chr($charact2).chr($charact2);
+			$BonusB = 'Bonus';
 			break;
 		default:
 			$foulBS = ' ';
+			$foulBS2 = ' ';
 			break;
 	}
+	
 	$timeoutA = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeoutA);
 	$timeoutB = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeoutB);
 	$period = preg_replace('/[\x00-\x1F\x7F]/u', '', $period);
@@ -75,7 +93,7 @@ function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB,
 	$timestamp = preg_replace('/[\x00-\x1F\x7F]/u', '', $timestamp);
 	$panelname = preg_replace('/[\x00-\x1F\x7F]/u', '', $panelname);
 	$timeoutDuration = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeoutDuration);
-	$ballTime = preg_replace('/[\x00-\x1F\x7F]/u', '', $ballTime);
+	$shotClock = preg_replace('/[\x00-\x1F\x7F]/u', '', $shotClock);
 
 	// TK insert: improved rule to detect faulty records
 	if ((!is_numeric($period)) or (!is_numeric($ballTime))) {
@@ -113,10 +131,10 @@ function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB,
 		
 	}
 
-	$document = "<document><event><TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulB>$foulB</TeamFoulB><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulBS>$foulBS</TeamFoulBS><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$ballTime</ShotClock><UTCTime>$timestamp</UTCTime></event></document>";
+	$document = "<document><event><TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulB>$foulB</TeamFoulB><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulBS>$foulBS</TeamFoulBS><TeamFoulAS2>$foulAS2</TeamFoulAS2><TeamFoulBS2>$foulBS2</TeamFoulBS2><BonusA>$BonusA</BonusA><BonusB>$BonusB</BonusB><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$shotClock</ShotClock><UTCTime>$timestamp</UTCTime></event></document>";
 	$filename = $panelname.'-lastaction.xml';
 	file_put_contents($filename, $document);
-	return "<TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulB>$foulB</TeamFoulB><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulBS>$foulBS</TeamFoulBS><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$ballTime</ShotClock>";
+	return "<TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulB>$foulB</TeamFoulB><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulBS>$foulBS</TeamFoulBS><TeamFoulAS2>$foulAS2</TeamFoulAS2><TeamFoulBS2>$foulBS2</TeamFoulBS2><BonusA>$BonusA</BonusA><BonusB>$BonusB</BonusB><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$shotClock</ShotClock>";
 }
 
 function dbw($beginning, $end, $string) {
@@ -131,6 +149,7 @@ function dbw($beginning, $end, $string) {
   return str_replace($textToDelete, '', $string);
 }
 //SwissTiming Reader - 01/12/2017 - Thomas Gervaise - gervaise.thomas41@gmail.com
+//Enhanced by Thomas Kohler since
 
 foreach(getallheaders() as $name => $value) {
 	if($name == "Device_ID") {
@@ -182,7 +201,7 @@ $timestamp = date('Y-m-d H:i:s', time());
 
 
 $runningTimeout = substr($mainInfo, 19, 2);
-$ballTime = substr($mainInfo, 21, 2);
+$shotClock = substr($mainInfo, 21, 2);
 $timeoutDuration = substr($mainInfo, 19, 2);
 if($runningTimeout == "  ") {
 	$runningTimeout = "No";
@@ -192,11 +211,11 @@ if($runningTimeout == "  ") {
 }
 
 if($ballTime == "  ") {
-	$ballTime = 0;
+	$shotClock = 0;
 }
 
 
-$lastActionXML = generateLastAct($homeScore, $extScore, $homeFouls, $extFouls, $homeTimeout, $extTimeout, $period, $gameStatus, $runningTimeout, $timer, $timestamp, $panel_name, $timeoutDuration, $ballTime);
+$lastActionXML = generateLastAct($homeScore, $extScore, $homeFouls, $extFouls, $homeTimeout, $extTimeout, $period, $gameStatus, $runningTimeout, $timer, $timestamp, $panel_name, $timeoutDuration, $shotClock);
 
 $fileName = $panel_name.'-'.date('Y-m-d', time()).'.xml';
 if(file_exists($fileName)) {
