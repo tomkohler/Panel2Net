@@ -23,47 +23,63 @@ function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB,
 	$foulA = preg_replace('/[\x00-\x1F\x7F]/u', '', $foulA);
 	// TK Insert - Symbolic Foul Element
 	$charact = 42;
+	$charact2 = 45;
+	$BonusA = ' ';
+	$BonusB = ' ';
 	switch ($foulA) {
 		case 1:
 			$foulAS = chr($charact);
+			$foulAS2 = chr($charact2);
 			break;
 		case 2:
 			$foulAS = chr($charact).chr($charact);
+			$foulAS2 = chr($charact2).chr($charact2);
 			break;
 		case 3:
 			$foulAS = chr($charact).chr($charact).chr($charact);
+			$foulAS2 = chr($charact2).chr($charact2).chr($charact2);
 			break;
 		case 4:
 			$foulAS = chr($charact).chr($charact).chr($charact).chr($charact);
+			$foulAS2 = chr($charact2).chr($charact2).chr($charact2).chr($charact2);
 			break;
 		case 5:
 			$foulAS = chr($charact).chr($charact).chr($charact).chr($charact).chr($charact);
+			$foulAS2 = chr($charact2).chr($charact2).chr($charact2).chr($charact2).chr($charact2);
+			$BonusA = 'Bonus';
 			break;
 		default:
 			$foulAS = ' ';
+			$foulAS2 = ' ';
 			break;
 	}
-
 	$foulB = preg_replace('/[\x00-\x1F\x7F]/u', '', $foulB);
 	// TK Insert - Symbolic Foul Element
 	switch ($foulB) {
 		case 1:
 			$foulBS = chr($charact);
+			$foulBS2 = chr($charact2);
 			break;
 		case 2:
 			$foulBS = chr($charact).chr($charact);
+			$foulBS2 = chr($charact2).chr($charact2);
 			break;
 		case 3:
 			$foulBS = chr($charact).chr($charact).chr($charact);
+			$foulBS2 = chr($charact2).chr($charact2).chr($charact2);
 			break;
 		case 4:
 			$foulBS = chr($charact).chr($charact).chr($charact).chr($charact);
+			$foulBS2 = chr($charact2).chr($charact2).chr($charact2).chr($charact2);
 			break;
 		case 5:
 			$foulBS = chr($charact).chr($charact).chr($charact).chr($charact).chr($charact);
+			$foulBS2 = chr($charact2).chr($charact2).chr($charact2).chr($charact2).chr($charact2);
+			$BonusB = 'Bonus';
 			break;
 		default:
 			$foulBS = ' ';
+			$foulBS2 = ' ';
 			break;
 	}
 
@@ -72,17 +88,30 @@ function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB,
 	$period = preg_replace('/[\x00-\x1F\x7F]/u', '', $period);
 	$gamestatus = preg_replace('/[\x00-\x1F\x7F]/u', '', $gamestatus);
 	$timeout = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeout);
-	$timer = preg_replace('/[\x00-\x1F\x7F]/u', '', $timer);
+	//debug_backtrace
+	//$timer2 = $timer;
+	
+	//$timer = preg_replace('/[\x00-\x1F\x7F]/u', '', $timer);
+	
+	// debug
+	//$temp = file_get_contents('debug3.txt');
+	//$temp .= $timer."-".$timer2."\n";
+	//file_put_contents('debug3.txt', $temp);
+	
 	$timestamp = preg_replace('/[\x00-\x1F\x7F]/u', '', $timestamp);
 	$panelname = preg_replace('/[\x00-\x1F\x7F]/u', '', $panelname);
 	$timeoutDuration = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeoutDuration);
 	$shotClock = preg_replace('/[\x00-\x1F\x7F]/u', '', $shotClock);
 
 	// TK insert: improved rule to detect faulty records
-	if ((!is_numeric($period)) or (!is_numeric($shotClock))) {
+	if ((!is_numeric($shotClock))) {
 		$status = 1;
 	} 
 
+	if ((!is_numeric($period))) {
+		$period = 0;
+	}
+	
 	if ((!is_numeric($timeoutA)) or (!is_numeric($timeoutB)))  {
 		$status = 2;
 	}
@@ -102,11 +131,11 @@ function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB,
 		}
 	}
 	// Timer < 1 minute with . divider
-	if (strpos(trim($timer),'.') !== false) {
-		if (!is_numeric(trim($timer))) {
-			$status = 6;
-		}
-	}
+	//if (strpos(trim($timer),'.') !== false) {
+	//	if (!is_numeric(trim($timer))) {
+	//		$status = 6;
+	//	}
+	//}
 
 	//file_put_contents("debut.txt", $status);
 	if($status > 0) {
@@ -114,10 +143,10 @@ function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB,
 		
 	}
 
-	$document = "<document><event><TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulB>$foulB</TeamFoulB><TeamFoulBS>$foulBS</TeamFoulBS><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$shotClock</ShotClock><UTCTime>$timestamp</UTCTime></event></document>";
+	$document = "<document><event><TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulB>$foulB</TeamFoulB><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulBS>$foulBS</TeamFoulBS><TeamFoulAS2>$foulAS2</TeamFoulAS2><TeamFoulBS2>$foulBS2</TeamFoulBS2><BonusA>$BonusA</BonusA><BonusB>$BonusB</BonusB><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$shotClock</ShotClock><UTCTime>$timestamp</UTCTime></event></document>";
 	$filename = $panelname.'-lastaction.xml';
 	file_put_contents($filename, $document);
-	return "<TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulB>$foulB</TeamFoulB><TeamFoulBS>$foulBS</TeamFoulBS><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$shotClock</ShotClock>";
+	return "<TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulB>$foulB</TeamFoulB><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulBS>$foulBS</TeamFoulBS><TeamFoulAS2>$foulAS2</TeamFoulAS2><TeamFoulBS2>$foulBS2</TeamFoulBS2><BonusA>$BonusA</BonusA><BonusB>$BonusB</BonusB><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$shotClock</ShotClock>";
 }
 
 function dbw($beginning, $end, $string) {
@@ -179,11 +208,18 @@ if($gameStatus == 1) {
 	$gameStatus = "START";
 }
 $testCond = trim(substr($mainInfo, 4, 2));
+
 if(strlen($testCond) == 1) {
-	$timer = substr($maininfo, 2, 2).'.'.substr($mainInfo, 4, 2);
+	$timer = substr($mainInfo, 2, 2).'.'.substr($mainInfo, 3, 1);
 } else {
 	$timer = substr($mainInfo, 2, 2).':'.substr($mainInfo, 4, 2);
 }
+
+// debug
+//$temp = file_get_contents('debug3.txt');
+//$temp .= $timer."\n".substr($mainInfo, 2, 4)."-".substr($mainInfo, 2, 1).":".substr($mainInfo, 3, 1).":".substr($mainInfo, 4, 1).":".substr($mainInfo, 5, 1)."\n";
+//file_put_contents('debug3.txt', $temp);
+
 $timestamp = date('Y-m-d H:i:s', time());
 
 
