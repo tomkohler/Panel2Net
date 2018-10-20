@@ -51,7 +51,7 @@ PackageByLength = 128
 # RequestMode: GET or POST
 RequestMode = 'POST'
 # RequestServer: Server IP or Name (Amazon EC2)
-RequestServer = '35.158.65.6'
+RequestServer = '3.120.213.249'
 # RequestPort: Port over which HTTP request is being placed
 RequestPort = 80
 # RequestURL (Default)
