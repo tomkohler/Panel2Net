@@ -1,10 +1,10 @@
-Objective of the project: Upload data from Serial Interface to Web for Mobatime, SwissTiming, Stramatel basketball or multisports panels using a low-cost approach 
+Objective of the project: Upload data from Serial Interface to Web for Bodet/Mobatime, SwissTiming, Stramatel basketball or multisports panels using a low-cost approach 
 
 Required Hardware (all available on Amazon or Aliexpress):
 * RPi3
-* RS232 or RS422 cable
+* RS232 or RS422 to USB cable
 * Handmade Cable fitting the panel-maker specifications (see documentation)
-* LAMP Server (I use a Droplet from Digital Ocean, but theoretically can sit also on RPi)
+* LAMP Server (Digital Ocean Droplet or AWS, but theoretically can sit also on a webserver on RPi)
 
 Software Installation:
 On Raspberry Pi
