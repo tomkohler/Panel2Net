@@ -5,8 +5,12 @@ function GetBetween($content, $start, $end) {
 	if (isset($r[1])) {
 		$rcount = count($r);
 		$r = explode($end, $r[$rcount-2]);
+		// TK: Debug
+		//file_put_contents("return.txt", $r[0]);
 		return $r[0];
 	}
+	// TK: Debug
+	//file_put_contents("return.txt", '');
 	return '';
 }
 
@@ -145,7 +149,7 @@ if(strpos(file_get_contents("php://input"), "01 7F 02 47") !== false) {
 $hexfile = file_get_contents($panel_name.'-'.date('Y-m-d', time()).'-packets.txt');
 $hexfile .= $content;
 $logfile = file_get_contents("logs.txt");
-$logfile .= "\n [".date('H:i:s', time())."] - Received ".file_get_contents("php://input");
+$logfile .= "\n [".date('H:i:s', time())."] - Received ".$panel_name.'-'.file_get_contents("php://input");
 file_put_contents("logs.txt", $logfile);
 file_put_contents($panel_name.'-'.date('Y-m-d', time()).'-packets.txt', $hexfile);
 $myinput = $hexfile;
@@ -202,11 +206,41 @@ if(!is_numeric(hex2str($tmp1))) {
 	$tmp4 = 30;
 }
 
+// Last 60 seconds is handled by 33 36 statement
 if($timeout[4] == '44') {
 	$timer = trim(hex2str($tmp1.$tmp2.'2E'.$tmp4));
 } else {
 	$timer = trim(hex2str($tmp1.$tmp2.'3A'.$tmp3.$tmp4));
 }
+// TK: debug
+// $temper = file_get_contents("debugtimer.txt");
+// $temper .= $timer."-".$tmp1."-".$tmp2."-".$tmp3."-".$tmp4."\n";
+// file_put_contents("debugtimer.txt", $temper);
+
+// TK 1/1/2019 - Insert decoding of tenth of seconds (originally we thought it would be via code 31 38, but done via 33 36
+$getScore = GetBetween($myinput, "01 7F 02 47 33 36 ", "01 7F 02 47");
+$getScore = explode(" ", $getScore);
+$tmp1 = $getScore[0];
+$tmp2 = $getScore[1];
+$tmp3 = $getScore[2];
+if(!is_numeric(hex2str($tmp1))) {
+	$tmp1 = 30;
+} elseif(!is_numeric(hex2str($tmp2))) {
+	$tmp2 = 30;
+} elseif(!is_numeric(hex2str($tmp3))) {
+	$tmp3 = 30;
+}
+
+// avoid that at the end there is 0.01 or 0.02 standing
+if ($tmp3 < 33) {
+	$tmp3 = 30;
+}
+
+$timer = trim(hex2str($tmp1.$tmp2.'2E'.$tmp3));
+
+$temper2 = file_get_contents("debugger.txt");
+$temper2 = $temper2.$timer."\n";
+file_put_contents("debugger.txt", $temper2);
 
 // TK: put timestamp - originally the server time but better to take the scorebug time (without the latency)
 if ($SBTime > 0) {
