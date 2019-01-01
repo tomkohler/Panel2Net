@@ -8,7 +8,7 @@ import http.client
 def hexspace(string, length):
     return ' '.join(string[i:i+length] for i in range(0,len(string),length))
 
-Device_ID = 'SB_LUGANO'
+Device_ID = 'SB_STARWINGS'
 response = ''
 # RequestMode: GET or POST
 RequestMode = 'POST'
@@ -23,6 +23,9 @@ RequestTimeOut = 10
 
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+# Open Debug File
+# f = open("/tmp/debug.txt", "ab")
 
 # Bind the socket to the port
 server_address = ('', 4000)
@@ -43,6 +46,11 @@ while True:
         while True:
             
             data = connection.recv(256)
+            
+            # debug line
+            # f.write(data)
+            # f.write("\n")
+            
             cdata = binascii.hexlify(data)
             ddata = cdata.decode('utf-8')
             ddata = ddata.upper()
@@ -71,3 +79,5 @@ while True:
     finally:
         # Clean up the connection
         connection.close()
+        # close debug file
+        # f.close()
