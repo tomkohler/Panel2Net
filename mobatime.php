@@ -14,7 +14,6 @@ function GetBetween($content, $start, $end) {
 	return '';
 }
 
-
 function hex2str($hex) {
     $str = '';
     for($i=0;$i<strlen($hex);$i+=2) $str .= chr(hexdec(substr($hex,$i,2)));
@@ -22,7 +21,6 @@ function hex2str($hex) {
 }
 
 function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB, $period, $gamestatus, $timeout, $timer, $timestamp, $panelname, $timeoutDuration, $shotClock) {
-
 	// TK Insert: initialise status variable
 	$status = 0;
 	$scoreA = preg_replace('/[\x00-\x1F\x7F]/u', '', $scoreA);
@@ -100,10 +98,10 @@ function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB,
 	$panelname = preg_replace('/[\x00-\x1F\x7F]/u', '', $panelname);
 	$timeoutDuration = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeoutDuration);
 	$shotClock = preg_replace('/[\x00-\x1F\x7F]/u', '', $shotClock);
-
 	$document = "<document><event><TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulB>$foulB</TeamFoulB><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulBS>$foulBS</TeamFoulBS><TeamFoulAS2>$foulAS2</TeamFoulAS2><TeamFoulBS2>$foulBS2</TeamFoulBS2><BonusA>$BonusA</BonusA><BonusB>$BonusB</BonusB><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$shotClock</ShotClock><UTCTime>$timestamp</UTCTime></event></document>";
 	$filename = $panelname.'-lastaction.xml';
 	file_put_contents($filename, $document);
+		
 	return "<TeamA>Home</TeamA><TeamB>Away</TeamB><ScoreTeamA>$scoreA</ScoreTeamA><ScoreTeamB>$scoreB</ScoreTeamB><TeamFoulA>$foulA</TeamFoulA><TeamFoulB>$foulB</TeamFoulB><TeamFoulAS>$foulAS</TeamFoulAS><TeamFoulBS>$foulBS</TeamFoulBS><TeamFoulAS2>$foulAS2</TeamFoulAS2><TeamFoulBS2>$foulBS2</TeamFoulBS2><BonusA>$BonusA</BonusA><BonusB>$BonusB</BonusB><TimeOutA>$timeoutA</TimeOutA><TimeOutB>$timeoutB</TimeOutB><Quarter>Q$period</Quarter><StartStop>$gamestatus</StartStop><Timeout>$timeout</Timeout><ClockTime>$timer</ClockTime><ClockTimeOut>$timeoutDuration</ClockTimeOut><ShotClock>$shotClock</ShotClock>";
 }
 
@@ -113,9 +111,7 @@ function dbw($beginning, $end, $string) {
   if ($beginningPos === false || $endPos === false) {
     return $string;
   }
-
   $textToDelete = substr($string, $beginningPos, ($endPos + strlen($end)) - $beginningPos);
-
   return str_replace($textToDelete, '', $string);
 }
 
@@ -123,7 +119,6 @@ function dbw($beginning, $end, $string) {
 // TK: variable init
 $panel_name = "";
 $SBTime = 0;
-
 foreach(getallheaders() as $name => $value) {
 	// TK: gets Device_ID from header on which to build the filename
 	if($name == "Device_ID") {
@@ -137,7 +132,6 @@ foreach(getallheaders() as $name => $value) {
 		}
 	}
 }
-
 if(strpos(file_get_contents("php://input"), "01 7F 02 47") !== false) {
 	$content = file_get_contents("php://input");
 } else {
@@ -166,7 +160,6 @@ $extScore = trim(hex2str($extScore));
 if(!is_numeric($extScore)) {
 	$extScore = 0;
 }
-
 if($homeScore == "") {
 	$homeScore = 0;
 } elseif($extScore == "") {
@@ -187,60 +180,112 @@ if(!is_numeric($period)) {
 	$period = 0;
 }
 $gameStatus = $timeout[0];
-if($gameStatus == 80) { 
-	$gameStatus = "START";
-} else {
-	$gameStatus = "STOP";
-}
+
 $tmp1 = $timeout[2];
 $tmp2 = $timeout[3];
 $tmp3 = $timeout[4];
 $tmp4 = $timeout[5];
+
+// TK: Debug
+// $temper = file_get_contents("debugtimer.txt");
+// $temper .= "\n3138 Sequence started\n";
+// $temper .= $gameStatus."-".$tmp1."-".$tmp2."-".$tmp3."-".$tmp4."\n";
+
+// ensure that all variables are numeric for calculations below
+// except if $tmp3 = 44, then we preserve this flag
 if(!is_numeric(hex2str($tmp1))) {
 	$tmp1 = 30;
 } elseif(!is_numeric(hex2str($tmp2))) {
 	$tmp2 = 30;
+} elseif($tmp3 == 44) {
+	$tmp3 = 44;	
 } elseif(!is_numeric(hex2str($tmp3))) {
 	$tmp3 = 30;
 } elseif(!is_numeric(hex2str($tmp4))) {
 	$tmp4 = 30;
 }
 
-// Last 60 seconds is handled by 33 36 statement
-if($timeout[4] == '44') {
+// $temper .= "3138 Sequence after cleaning\n";
+// $temper .= $gameStatus."-".$tmp1."-".$tmp2."-".$tmp3."-".$tmp4."\n";
+
+
+// TK: If the 31 38 record shows that we are about to enter the last minute (01:00) or already in it
+if ((($gameStatus == 80) and ($tmp1 == 30) and ($tmp2 == 31) and (($tmp3 == 30) or ($tmp3 == 44)) and ($tmp4 <= 31)) or ((($gameStatus == 90) or ($gameStatus == 92)) and ($tmp3 == 44))) {
+	
+	// calculate time
+	if (($gameStatus == 90) or ($gameStatus == 92) or ($tmp3 == 44)) {
+		// time arriving in SS.T format and disregard tenth of seconds in $tmp4
+		$refSeconds = ($tmp1-30)*10 + ($tmp2-30) + ($tmp4-30)*0.1; 
+	} else {
+		// time arriving in MM:SS format
+		$refSeconds = ($tmp1-30)*10*60 + ($tmp2-30)*60 + ($tmp3-30)*10 + ($tmp4-30); 
+	}
+	
+	// $temper .= "3138 Reference Time\n";
+	// $temper .= $refSeconds."\n";
+
+	// get the last 33 36 record
+	$getScore = GetBetween($myinput, "01 7F 02 47 33 36 ", "01 7F 02 47");
+	$getScore = explode(" ", $getScore);
+	$tmps1 = $getScore[0];
+	$tmps2 = $getScore[1];
+	$tmps3 = $getScore[2];
+	
+	// $temper .= "3336 Sequence started\n";
+	// $temper .= $gameStatus."-".$tmps1."-".$tmps2."-".$tmps3."\n";
+
+	// ensure that all variables are numeric for calculations below
+	if(!is_numeric(hex2str($tmps1))) {
+		$tmps1 = 30;
+	} elseif(!is_numeric(hex2str($tmps2))) {
+		$tmps2 = 30;
+	} elseif(!is_numeric(hex2str($tmps3))) {
+		$tmps3 = 30;
+	}	
+	
+	// $temper .= "3336 Sequence after cleaning\n";
+	// $temper .= $gameStatus."-".$tmps1."-".$tmps2."-".$tmps3."\n";
+	
+	// calculate time in 33 36 record that may not be zero and must be smaller than the reference time from 31 38
+	// otherwise disregard 33 36
+	$refSeconds2 = ($tmps1-30)*10 + ($tmps2-30) + ($tmps3-30)*0.1;
+	
+	// $temper .= "3336 Reference Time\n";
+	// $temper .= $refSeconds2."\n";
+	
+	if (($refSeconds2 >= 0) and ($refSeconds2 <= $refSeconds)) {
+		// use values from 33 36
+		$tmp1 = $tmps1;
+		$tmp2 = $tmps2;
+		$tmp3 = 44;
+		$tmp4 = $tmps3;
+	} 
+}
+
+// $temper .= "Output\n";
+// $temper .= $tmp1."-".$tmp2."-".$tmp3."-".$tmp4."\n";
+
+if($tmp3 == 44) {
+	// check if that is really needed
+	// if ($tmp4 < 32) {
+	// 	 $tmp4 = 30;
+	// }
 	$timer = trim(hex2str($tmp1.$tmp2.'2E'.$tmp4));
-} else {
+} else {	
 	$timer = trim(hex2str($tmp1.$tmp2.'3A'.$tmp3.$tmp4));
 }
+
+// $temper .= "Timer\n";
+// $temper .= $timer."\n";
+
+if($gameStatus == 80) { 
+	$gameStatus = "START";
+} else {
+	$gameStatus = "STOP";
+}
+
 // TK: debug
-// $temper = file_get_contents("debugtimer.txt");
-// $temper .= $timer."-".$tmp1."-".$tmp2."-".$tmp3."-".$tmp4."\n";
 // file_put_contents("debugtimer.txt", $temper);
-
-// TK 1/1/2019 - Insert decoding of tenth of seconds (originally we thought it would be via code 31 38, but done via 33 36
-$getScore = GetBetween($myinput, "01 7F 02 47 33 36 ", "01 7F 02 47");
-$getScore = explode(" ", $getScore);
-$tmp1 = $getScore[0];
-$tmp2 = $getScore[1];
-$tmp3 = $getScore[2];
-if(!is_numeric(hex2str($tmp1))) {
-	$tmp1 = 30;
-} elseif(!is_numeric(hex2str($tmp2))) {
-	$tmp2 = 30;
-} elseif(!is_numeric(hex2str($tmp3))) {
-	$tmp3 = 30;
-}
-
-// avoid that at the end there is 0.01 or 0.02 standing
-if ($tmp3 < 33) {
-	$tmp3 = 30;
-}
-
-$timer = trim(hex2str($tmp1.$tmp2.'2E'.$tmp3));
-
-$temper2 = file_get_contents("debugger.txt");
-$temper2 = $temper2.$timer."\n";
-file_put_contents("debugger.txt", $temper2);
 
 // TK: put timestamp - originally the server time but better to take the scorebug time (without the latency)
 if ($SBTime > 0) {
@@ -254,7 +299,6 @@ else {
 //$tdiff = $tsp-$SBTime;
 //$time_output = "SB: ".$SBTime." - Server: ".$tsp." - Diff: ".$tdiff;
 //file_put_contents("timecomparison.txt", $time_output);
-
 $runningTimeout = GetBetween($myinput, "01 7F 02 47 31 39 35 ", "01 7F 02 47");
 $runningTimeout = explode(" ", $runningTimeout);
 $timeoutTimer = hex2str($runningTimeout[2] . $runningTimeout[3]);
@@ -263,7 +307,6 @@ if($timeoutTimer == "30") {
 } else {
 	$runningTimeout = "No";
 }
-
 $timeouts = GetBetween($myinput, "01 7F 02 47 35 30 ", "01 7F 02 47");
 $timeouts = explode(" ", $timeouts);
 $flag = sprintf("%08d", decbin(hexdec($timeouts[0])));
@@ -273,13 +316,9 @@ if($flag == 1) {
 } else {
 	$shotclock = hex2str($timeouts[1].$timeouts[2]);
 }
-
 $lastActionXML = generateLastAct($homeScore, $extScore, $homeFouls, $extFouls, $homeTimeout, $extTimeout, $period, $gameStatus, $runningTimeout, $timer, $timestamp, $panel_name, $timeoutTimer, $shotclock);
-
-
 //debug
 //$temp = file_get_contents('debug.txt');
-
 $fileName = $panel_name.'-'.date('Y-m-d', time()).'.xml';
 if(file_exists($fileName)) {
 	$fileContent = file_get_contents($fileName);
@@ -298,13 +337,9 @@ if(strpos($fileContent, $lastActionXML)) {
 	$lastEventPos = strrpos($fileContent, "</playbyplay>");
 	$fileContent = substr_replace($fileContent, "<event>".$lastActionXML."<UTCTime>$timestamp</UTCTime></event>", $lastEventPos, 0);
 }
-
 //debugging data
 //file_put_contents('debug.txt', $temp);
-
 $docRest = '<PlayerinfoA>%PINFOA%</PlayerinfoA><PlayerinfoB>%PINFOB%</PlayerinfoB>';
-
-
 $homeFouls = GetBetween($myinput, "01 7F 02 47 33 33 35 ", "01 7F 02 47");
 $homeFoulsHx = $homeFouls;
 $homeFouls = explode(" ", $homeFouls);
@@ -317,15 +352,12 @@ $homeNumbers = explode(" ", $homeNumbers);
 $extNumbers = GetBetween($myinput, "01 7F 02 47 33 38 ", "01 7F 02 47");
 $extNumbersHx = $extNumbers;
 $extNumbers = explode(" ", $extNumbers);
-
 // TK: inserted $countmax to avoid counting outside bounds
 $playerA = "";
 $countmaxF = count($homeFouls);
 $countmaxN = count($homeNumbers);
 $number = "";
-
 for($i = 4; $i<=$countmaxF; $i++) {
-
 	$fouls = $homeFouls[$i-4];
 	if($fouls == "80") {
 		$fouls = 0;
@@ -353,16 +385,13 @@ for($i = 4; $i<=$countmaxF; $i++) {
 		
 	$playerA .= "<ShirtNo>$number</ShirtNo><Points>0</Points><Fouls>$fouls</Fouls>";
 }
-
 // TK: section corrected as it referenced to homeFouls rather than extFouls (copy-paste error)
 // TK: inserted $countmax to avoid counting outside bounds
 $playerB = "";
 $countmaxF = count($extFouls);
 $countmaxN = count($extNumbers);
 $number = "";
-
 for($i = 4; $i<=$countmaxF; $i++) {
-
 	$fouls = $extFouls[$i-4];
 	if($fouls == "80") {
 		$fouls = 0;
@@ -393,7 +422,6 @@ for($i = 4; $i<=$countmaxF; $i++) {
 //$temp = file_get_contents("players.txt");
 //file_put_contents("players.txt", $temp.$homeFoulsHx."-".$extFoulsHx."-".$homeNumbersHx."-".$extNumbersHx."\n");
 // "\n\n".print_r($homeFouls)."\n".print_r($homeNumbers)."\n".print_r($extFouls)."\n".print_r($extNumbers)."\n"
-
 $getScores = explode("01 7F 02 47 35 36 35 ", $myinput);
 foreach($getScores as $score) {
 	$score = explode("01 7F", $score);
@@ -415,19 +443,10 @@ foreach($getScores as $score) {
 		$playerB = substr_replace($playerB, hex2str($score[3].$score[4]), $position, 0);
 	} 
 }
-
 $docRest = str_replace("%PINFOA%", $playerA, $docRest);
 $docRest = str_replace("%PINFOB%", $playerB, $docRest);
-
 $fileContent = dbw("<PlayerinfoA>","</PlayerinfoB>",$fileContent);
 $lastPlayerPos = strrpos($fileContent, "</playerinfo>");
 $fileContent = substr_replace($fileContent, $docRest, $lastPlayerPos, 0);
-
 file_put_contents($fileName, $fileContent);
-
-
-
-
-
-
 ?>
