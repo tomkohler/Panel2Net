@@ -109,6 +109,18 @@ function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB,
 	$timeoutDuration = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeoutDuration);
 	$shotClock = preg_replace('/[\x00-\x1F\x7F]/u', '', $shotClock);
 	
+	// make START STOP sign
+	if ($gamestatus == "STOP") {
+		$gamestatus = chr(46);
+	} else {
+		$gamestatus = " ";
+	}
+	
+	// push outside Timeout the normal clock
+	if ($timeout == "No") {
+		$timeoutDuration = $timer;
+	}
+	
 	// test to insert the +1, +2, +3 in the score changes
 	if (file_exists($panelname.'-lastaction.xml')) {
 		$document = simplexml_load_file($panelname.'-lastaction.xml');
@@ -212,9 +224,9 @@ if(strpos(file_get_contents("php://input"), "01 7F 02 47") !== false) {
 
 $hexfile = file_get_contents($panel_name.'-'.date('Y-m-d', time()).'-packets.txt');
 $hexfile .= $content;
-$logfile = file_get_contents("logs.txt");
-$logfile .= "\n [".date('H:i:s', time())."] - Received ".$panel_name.'-'.file_get_contents("php://input");
-file_put_contents("logs.txt", $logfile);
+//$logfile = file_get_contents("logs.txt");
+//$logfile .= "\n [".date('H:i:s', time())."] - Received ".$panel_name.'-'.file_get_contents("php://input");
+//file_put_contents("logs.txt", $logfile);
 file_put_contents($panel_name.'-'.date('Y-m-d', time()).'-packets.txt', $hexfile);
 $myinput = $hexfile;
 
@@ -626,5 +638,5 @@ $docRest = str_replace("%PINFOB%", $playerB, $docRest);
 $fileContent = dbw("<PlayerinfoA>","</PlayerinfoB>",$fileContent);
 $lastPlayerPos = strrpos($fileContent, "</playerinfo>");
 $fileContent = substr_replace($fileContent, $docRest, $lastPlayerPos, 0);
-file_put_contents($fileName, $fileContent);
+//file_put_contents($fileName, $fileContent);
 ?>
