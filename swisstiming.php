@@ -311,6 +311,7 @@ $extPlayers = explode("F2", $myinput);
 $arrayLength5 = count($extPlayers);
 $extPlayers = $extPlayers[$arrayLength5-2];
 $playerA = "";
+$playerA2 = "Home (#-Pts-Fouls): ";
 for($i = 1; $i<=16; $i++) {
 	$fouls = substr($homePlayers, 0+($i*3)-1, 1);
 	if($fouls == " ") {
@@ -328,9 +329,14 @@ for($i = 1; $i<=16; $i++) {
 	}
 	$number = trim($number);
 	$fouls = trim($fouls);
+	if (($number > 0) or ($fouls > 0)) {
+		$playerA2 .= "#$shirtnum $number-$fouls   ";
+	}
 	$playerA .= "<ShirtNo>$shirtnum</ShirtNo><Points>$number</Points><Fouls>$fouls</Fouls>";
 }
+
 $playerB = "";
+$playerB2 = "Away (#-Pts-Fouls): ";
 for($i = 1; $i<=13; $i++) {
 	$fouls = substr($extPlayers, 0+($i*3)-1, 1);
 	if($fouls == " ") {
@@ -348,8 +354,13 @@ for($i = 1; $i<=13; $i++) {
 	}
 	$number = trim($number);
 	$fouls = trim($fouls);
+	if (($number > 0) or ($fouls > 0)) {
+		$playerB2 .= "#$shirtnum $number-$fouls   ";
+	}
 	$playerB .= "<ShirtNo>$shirtnum</ShirtNo><Points>$number</Points><Fouls>$fouls</Fouls>";
 }
+file_put_contents($panel_name.'-statistics.xml', "<home>".$playerA."</home>\n<away>".$playerB."</away>");
+file_put_contents($panel_name.'-statistics2.xml', "<html>".$playerA2.$playerB2."</html>");
 $docRest = str_replace("%PINFOA%", $playerA, $docRest);
 $docRest = str_replace("%PINFOB%", $playerB, $docRest);
 $fileContent = dbw("<PlayerinfoA>","</PlayerinfoB>",$fileContent);
