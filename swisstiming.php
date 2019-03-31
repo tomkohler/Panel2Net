@@ -90,6 +90,7 @@ function generateLastAct($scoreA, $scoreB, $foulA, $foulB, $timeoutA, $timeoutB,
 	$panelname = preg_replace('/[\x00-\x1F\x7F]/u', '', $panelname);
 	$timeoutDuration = preg_replace('/[\x00-\x1F\x7F]/u', '', $timeoutDuration);
 	$shotClock = preg_replace('/[\x00-\x1F\x7F]/u', '', $shotClock);
+	
 	// TK insert: improved rule to detect faulty records
 	if (!is_numeric($period)) {
 		$period = 0;
@@ -248,7 +249,7 @@ $hexfile .= $content;
 //file_put_contents("logs.txt", $logfile);
 file_put_contents($panel_name.'-'.date('Y-m-d', time()).'-packets.txt', $hexfile);
 $myinput = $hexfile;
-$mainInfo = explode("D", $myinput);
+$mainInfo = explode("\x02\x44", $myinput); // probably the "D" is not enough and should be STX D
 $arrayLength = count($mainInfo);
 $mainInfo = $mainInfo[$arrayLength-2];
 $homeScore = trim(substr($mainInfo, 5, 3));
